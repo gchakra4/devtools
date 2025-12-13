@@ -20,40 +20,39 @@
             window.AUTH_START_URL = cfg.AUTH_START_URL || window.AUTH_START_URL;
             window.DEVTOOLS_HOME_URL = cfg.DEVTOOLS_HOME_URL || window.DEVTOOLS_HOME_URL;
         </script>
-        <script type="module">
-            import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm'
-            let supabase
-            try {
-                supabase = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
-                window.supabaseClient = supabase
-            } catch (e) {
-                console.error('Supabase createClient failed', e)
-                // Redirect to auth start so user can request sign-in; show console for details
-                window.location.href = window.AUTH_START_URL
-            }
+                <script type="module">
+                    (async () => {
+                        try {
+                            const lib = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm')
+                            const createClient = lib.createClient
+                            const supabase = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
+                            window.supabaseClient = supabase
 
-            try {
-                const { data: sessionData } = await supabase.auth.getSession()
-                const uid = sessionData?.session?.user?.id
-                if (!uid) {
-                    // No session: send to auth start/magic link
-                    window.location.href = window.AUTH_START_URL
-                } else {
-                    // Check approval membership
-                    const { data, error } = await supabase
-                        .from('devtools_developers')
-                        .select('user_id')
-                        .eq('user_id', uid)
-                        .limit(1)
-                    if (error) console.warn('Membership check failed', error)
-                    if (!data || data.length === 0) window.location.href = window.REQUEST_ACCESS_URL
-                }
-            } catch (err) {
-                console.error('Supabase runtime error', err)
-                // Fallback: redirect to auth start
-                window.location.href = window.AUTH_START_URL
-            }
-        </script>
+                            try {
+                                const { data: sessionData } = await supabase.auth.getSession()
+                                const uid = sessionData?.session?.user?.id
+                                if (!uid) {
+                                    window.location.href = window.AUTH_START_URL
+                                    return
+                                }
+                                const { data, error } = await supabase
+                                    .from('devtools_developers')
+                                    .select('user_id')
+                                    .eq('user_id', uid)
+                                    .limit(1)
+                                if (error) console.warn('Membership check failed', error)
+                                if (!data || data.length === 0) window.location.href = window.REQUEST_ACCESS_URL
+                            } catch (err) {
+                                console.error('Supabase runtime error', err)
+                                window.location.href = window.AUTH_START_URL
+                            }
+                        } catch (e) {
+                            console.error('Failed to import supabase module or init client', e)
+                            // Show the auth start so user can still request a magic link
+                            window.location.href = window.AUTH_START_URL
+                        }
+                    })()
+                </script>
         <header class="header">
             <h1>🛠️ DevTools Hub</h1>
             <p class="subtitle">Your collection of development tools and utilities</p>

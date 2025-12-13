@@ -72,26 +72,17 @@
         </div>
     </div>
 
-    <script type="module">
-        // Use a single, explicit ESM build of supabase-js and initialize defensively
-        import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-
-        // Configure via environment variables embedded at build/deploy time if needed
-        const SUPABASE_URL = window.SUPABASE_URL || "https://YOUR_PROJECT_REF.supabase.co";
-        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "YOUR_ANON_KEY";
-
-        let supabase;
-        try {
-            supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            // expose for debugging in console
-            window.supabaseClient = supabase;
-        } catch (initErr) {
-            console.error('Supabase init error', initErr);
-            // show error in UI and render fallback form
-            message.innerHTML = `<div class="error">Client initialization failed: ${String(initErr.message || initErr)}</div>`;
-            renderEmailForm();
-            return;
-        }
+        <script type="module">
+            (async () => {
+                try {
+                    const lib = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm')
+                    const createClient = lib.createClient
+                    const SUPABASE_URL = window.SUPABASE_URL || "https://YOUR_PROJECT_REF.supabase.co";
+                    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "YOUR_ANON_KEY";
+                    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+                    window.supabaseClient = supabase
+                    // proceed with existing completeMagicLink flow after init
+                
         const message = document.getElementById('message');
         const retryBtn = document.getElementById('retry');
 
@@ -199,8 +190,15 @@
             message.appendChild(form);
         }
 
-        // Start
-        completeMagicLink();
+                // Start
+                completeMagicLink();
+                return;
+            } catch (err) {
+                console.error('Failed to import supabase module or init client', err)
+                message.innerHTML = `<div class="error">Client initialization failed: ${String(err.message || err)}</div>`;
+                renderEmailForm();
+            }
+        })()
     </script>
 </body>
 
