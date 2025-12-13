@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -185,6 +186,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -204,9 +206,11 @@
 
             <div class="workflow-card">
                 <h4>📂 Local Folders:</h4>
-                <div class="code-block"><pre>D:\New folder\
+                <div class="code-block">
+                    <pre>D:\New folder\
   ├── tryfix - Copy\    → gchakra4/yogique (main & dev branches)
-  └── devtools\         → gchakra4/devtools (main branch)</pre></div>
+  └── devtools\         → gchakra4/devtools (main branch)</pre>
+                </div>
             </div>
         </div>
 
@@ -215,7 +219,8 @@
 
             <h3><span class="step-number">1</span>Work on Development Branch</h3>
             <p>All day-to-day development happens on the <span class="inline-code">dev</span> branch:</p>
-            <div class="code-block"><pre># Switch to main project
+            <div class="code-block">
+                <pre># Switch to main project
 cd "D:\New folder\tryfix - Copy"
 
 # Make sure you're on dev branch
@@ -234,10 +239,12 @@ git add .
 git commit -m "Added new booking feature"
 
 # Push to dev branch (deploys to dev.yogique.life)
-git push origin dev</pre></div>
+git push origin dev</pre>
+            </div>
 
             <div class="info-box">
-                <strong>💡 Result:</strong> Changes automatically deploy to <strong>dev.yogique.life</strong> for testing
+                <strong>💡 Result:</strong> Changes automatically deploy to <strong>dev.yogique.life</strong> for
+                testing
             </div>
 
             <h3><span class="step-number">2</span>Test on Development Site</h3>
@@ -251,7 +258,8 @@ git push origin dev</pre></div>
 
             <h3><span class="step-number">3</span>Deploy to Production</h3>
             <p>When everything works perfectly, merge to production:</p>
-            <div class="code-block"><pre># Switch to production branch
+            <div class="code-block">
+                <pre># Switch to production branch
 git checkout main
 
 # Merge dev branch into main
@@ -261,7 +269,8 @@ git merge dev
 git push origin main
 
 # Switch back to dev for next feature
-git checkout dev</pre></div>
+git checkout dev</pre>
+            </div>
 
             <div class="success-box">
                 <strong>✅ Result:</strong> Changes are now live on <strong>yogique.life</strong>
@@ -272,7 +281,8 @@ git checkout dev</pre></div>
             <h2>🔧 Working with DevTools Repository</h2>
 
             <h3>Switch to DevTools Project</h3>
-            <div class="code-block"><pre># Switch to devtools folder
+            <div class="code-block">
+                <pre># Switch to devtools folder
 cd "D:\New folder\devtools"
 
 # Check current status
@@ -285,7 +295,8 @@ git add .
 git commit -m "Added new developer tool"
 
 # Push to GitHub (deploys to devtools.yogique.life)
-git push origin main</pre></div>
+git push origin main</pre>
+            </div>
 
             <div class="info-box">
                 <strong>💡 Result:</strong> Updates automatically deploy to <strong>devtools.yogique.life</strong>
@@ -297,51 +308,61 @@ git push origin main</pre></div>
 
             <div class="workflow-card">
                 <h4>Check Which Repository You're In:</h4>
-                <div class="code-block"><pre># Show current directory
+                <div class="code-block">
+                    <pre># Show current directory
 pwd
 
 # Show git repository URL
 git remote -v
 
 # Show current branch
-git branch</pre></div>
+git branch</pre>
+                </div>
             </div>
 
             <div class="workflow-card">
                 <h4>Switch Between Projects:</h4>
-                <div class="code-block"><pre># Work on main app
+                <div class="code-block">
+                    <pre># Work on main app
 cd "D:\New folder\tryfix - Copy"
 
 # Work on devtools
-cd "D:\New folder\devtools"</pre></div>
+cd "D:\New folder\devtools"</pre>
+                </div>
             </div>
 
             <div class="workflow-card">
                 <h4>Switch Between Branches (Main App Only):</h4>
-                <div class="code-block"><pre># Switch to dev branch (for development)
+                <div class="code-block">
+                    <pre># Switch to dev branch (for development)
 git checkout dev
 
 # Switch to main branch (for production)
 git checkout main
 
 # See all branches
-git branch -a</pre></div>
+git branch -a</pre>
+                </div>
             </div>
 
             <div class="workflow-card">
                 <h4>Undo Changes (Before Commit):</h4>
-                <div class="code-block"><pre># Discard changes to specific file
+                <div class="code-block">
+                    <pre># Discard changes to specific file
 git checkout -- filename.js
 
 # Discard all changes
-git reset --hard</pre></div>
+git reset --hard</pre>
+                </div>
             </div>
 
             <div class="workflow-card">
                 <h4>Pull Latest Changes:</h4>
-                <div class="code-block"><pre># Update from GitHub
+                <div class="code-block">
+                    <pre># Update from GitHub
 git pull origin dev      # For dev branch
-git pull origin main     # For main branch</pre></div>
+git pull origin main     # For main branch</pre>
+                </div>
             </div>
         </div>
 
@@ -350,7 +371,8 @@ git pull origin main     # For main branch</pre></div>
 
             <div class="warning-box">
                 <strong>❌ Never commit directly to main branch!</strong>
-                <p style="margin-top: 0.5rem;">Always develop on <span class="inline-code">dev</span> branch first, test thoroughly, then merge to main.</p>
+                <p style="margin-top: 0.5rem;">Always develop on <span class="inline-code">dev</span> branch first, test
+                    thoroughly, then merge to main.</p>
             </div>
 
             <div class="info-box">
@@ -369,41 +391,49 @@ git pull origin main     # For main branch</pre></div>
 
             <div class="workflow-card">
                 <h4>❓ I forgot which branch I'm on</h4>
-                <div class="code-block"><pre>git branch
-# * shows your current branch</pre></div>
+                <div class="code-block">
+                    <pre>git branch
+# * shows your current branch</pre>
+                </div>
             </div>
 
             <div class="workflow-card">
                 <h4>❓ I made changes on the wrong branch</h4>
-                <div class="code-block"><pre># Save your changes temporarily
+                <div class="code-block">
+                    <pre># Save your changes temporarily
 git stash
 
 # Switch to correct branch
 git checkout dev
 
 # Apply your changes
-git stash pop</pre></div>
+git stash pop</pre>
+                </div>
             </div>
 
             <div class="workflow-card">
                 <h4>❓ I want to undo my last commit</h4>
-                <div class="code-block"><pre># Undo last commit, keep changes
+                <div class="code-block">
+                    <pre># Undo last commit, keep changes
 git reset --soft HEAD~1
 
 # Undo last commit, discard changes
-git reset --hard HEAD~1</pre></div>
+git reset --hard HEAD~1</pre>
+                </div>
             </div>
 
             <div class="workflow-card">
                 <h4>❓ Push was rejected (conflicts)</h4>
-                <div class="code-block"><pre># Pull latest changes first
+                <div class="code-block">
+                    <pre># Pull latest changes first
 git pull origin dev
 
 # Resolve conflicts in VS Code
 # Then commit and push again
 git add .
 git commit -m "Merged latest changes"
-git push origin dev</pre></div>
+git push origin dev</pre>
+                </div>
             </div>
         </div>
 
@@ -411,7 +441,8 @@ git push origin dev</pre></div>
             <h2>🎯 Complete Workflow Example</h2>
             <p>Here's a real-world example from start to finish:</p>
 
-            <div class="code-block"><pre># Monday morning - Start new feature
+            <div class="code-block">
+                <pre># Monday morning - Start new feature
 cd "D:\New folder\tryfix - Copy"
 git checkout dev
 git pull origin dev        # Get latest changes
@@ -436,16 +467,20 @@ git checkout dev
 cd "D:\New folder\devtools"
 git add .
 git commit -m "Added new deployment guide"
-git push origin main</pre></div>
+git push origin main</pre>
+            </div>
         </div>
 
         <div class="section">
             <h2>🌐 Your Live Sites</h2>
             <div class="success-box">
                 <ul style="margin-top: 0.5rem;">
-                    <li><strong>Production:</strong> <a href="https://yogique.life" target="_blank">yogique.life</a> (main branch)</li>
-                    <li><strong>Development:</strong> <a href="https://dev.yogique.life" target="_blank">dev.yogique.life</a> (dev branch)</li>
-                    <li><strong>DevTools:</strong> <a href="https://devtools.yogique.life" target="_blank">devtools.yogique.life</a> (devtools repo)</li>
+                    <li><strong>Production:</strong> <a href="https://yogique.life" target="_blank">yogique.life</a>
+                        (main branch)</li>
+                    <li><strong>Development:</strong> <a href="https://dev.yogique.life"
+                            target="_blank">dev.yogique.life</a> (dev branch)</li>
+                    <li><strong>DevTools:</strong> <a href="https://devtools.yogique.life"
+                            target="_blank">devtools.yogique.life</a> (devtools repo)</li>
                 </ul>
             </div>
         </div>
@@ -455,4 +490,5 @@ git push origin main</pre></div>
         </div>
     </div>
 </body>
+
 </html>
