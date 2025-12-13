@@ -21,27 +21,37 @@
             window.DEVTOOLS_HOME_URL = cfg.DEVTOOLS_HOME_URL || window.DEVTOOLS_HOME_URL;
         </script>
         <script type="module">
-            import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4'
-            const supabase = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
-            const { data: sessionData } = await supabase.auth.getSession()
-            const uid = sessionData?.session?.user?.id
-            if (!uid) {
-                // No session: send to auth start/magic link
+            import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm'
+            let supabase
+            try {
+                supabase = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
+                window.supabaseClient = supabase
+            } catch (e) {
+                console.error('Supabase createClient failed', e)
+                // Redirect to auth start so user can request sign-in; show console for details
                 window.location.href = window.AUTH_START_URL
-            } else {
-                // Check approval membership
-                const { data, error } = await supabase
-                    .from('devtools_developers')
-                    .select('user_id')
-                    .eq('user_id', uid)
-                    .limit(1)
-                if (error) {
-                    console.warn('Membership check failed', error)
+            }
+
+            try {
+                const { data: sessionData } = await supabase.auth.getSession()
+                const uid = sessionData?.session?.user?.id
+                if (!uid) {
+                    // No session: send to auth start/magic link
+                    window.location.href = window.AUTH_START_URL
+                } else {
+                    // Check approval membership
+                    const { data, error } = await supabase
+                        .from('devtools_developers')
+                        .select('user_id')
+                        .eq('user_id', uid)
+                        .limit(1)
+                    if (error) console.warn('Membership check failed', error)
+                    if (!data || data.length === 0) window.location.href = window.REQUEST_ACCESS_URL
                 }
-                if (!data || data.length === 0) {
-                    // Not approved: redirect to Request Access in the main app
-                    window.location.href = window.REQUEST_ACCESS_URL
-                }
+            } catch (err) {
+                console.error('Supabase runtime error', err)
+                // Fallback: redirect to auth start
+                window.location.href = window.AUTH_START_URL
             }
         </script>
         <header class="header">
