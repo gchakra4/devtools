@@ -1,99 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DevTools Auth | Yogique</title>
-  <link rel="stylesheet" href="../../css/style.css" />
-  <style>
-    .auth-card { max-width: 640px; margin: 2rem auto; background: white; border-radius: 16px; padding: 2rem; box-shadow: var(--shadow-lg); }
-    .status { margin-top: 1rem; color: var(--text-light); }
-    .user-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem; margin-top: 1rem; }
-    .error { color: #dc2626; }
-    .success { color: #10b981; }
-    .btn-row { display: flex; gap: .75rem; margin-top: 1.25rem; }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DevTools Auth | Yogique</title>
+    <link rel="stylesheet" href="../../css/style.css" />
+    <script>
+        window.SUPABASE_URL = window.SUPABASE_URL || "https://YOUR_PROJECT_REF.supabase.co";
+        window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "YOUR_ANON_KEY";
+        window.REQUEST_ACCESS_URL = window.REQUEST_ACCESS_URL || "https://yogique.life/request-access";
+        window.DEVTOOLS_HOME_URL = window.DEVTOOLS_HOME_URL || "https://devtools.yogique.life/";
+    </script>
+    <style>
+        .auth-card {
+            max-width: 640px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .status {
+            margin-top: 1rem;
+            color: var(--text-light);
+        }
+
+        .user-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .error {
+            color: #dc2626;
+        }
+
+        .success {
+            color: #10b981;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: .75rem;
+            margin-top: 1.25rem;
+        }
+    </style>
 </head>
+
 <body>
-  <div class="container">
-    <header class="header" style="margin-bottom: 1rem;">
-      <h1>🔐 DevTools Authentication</h1>
-      <p class="subtitle">Completes Supabase magic-link sign-in and routes you to DevTools Hub</p>
-    </header>
+    <div class="container">
+        <header class="header" style="margin-bottom: 1rem;">
+            <h1>🔐 DevTools Authentication</h1>
+            <p class="subtitle">Completes Supabase magic-link sign-in and routes you to DevTools Hub</p>
+        </header>
 
-    <div class="auth-card">
-      <h3>Signing you in…</h3>
-      <p class="status">Processing the magic link. Please wait.</p>
-      <div id="message" class="user-box"></div>
-      <div class="btn-row">
-        <a class="btn btn-secondary" href="../../index.html">← Back to DevTools</a>
-        <button id="retry" class="btn btn-primary" style="display:none;">Retry</button>
-      </div>
+        <div class="auth-card">
+            <h3>Signing you in…</h3>
+            <p class="status">Processing the magic link. Please wait.</p>
+            <div id="message" class="user-box"></div>
+            <div class="btn-row">
+                <a class="btn btn-secondary" href="../../index.html">← Back to DevTools</a>
+                <button id="retry" class="btn btn-primary" style="display:none;">Retry</button>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+    <script type="module">
+        import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-    // Configure via environment variables embedded at build/deploy time if needed
-    const SUPABASE_URL = window.SUPABASE_URL || "https://YOUR_PROJECT_REF.supabase.co";
-    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "YOUR_ANON_KEY";
+        // Configure via environment variables embedded at build/deploy time if needed
+        const SUPABASE_URL = window.SUPABASE_URL || "https://YOUR_PROJECT_REF.supabase.co";
+        const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "YOUR_ANON_KEY";
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const message = document.getElementById('message');
-    const retryBtn = document.getElementById('retry');
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const message = document.getElementById('message');
+        const retryBtn = document.getElementById('retry');
 
-    async function completeMagicLink() {
-      try {
-        // Parse URL params for access_token / refresh_token
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const queryParams = new URLSearchParams(window.location.search);
+        async function completeMagicLink() {
+            try {
+                // Parse URL params for access_token / refresh_token
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                const queryParams = new URLSearchParams(window.location.search);
 
-        const accessToken = hashParams.get('access_token') || queryParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
-        const type = hashParams.get('type') || queryParams.get('type');
+                const accessToken = hashParams.get('access_token') || queryParams.get('access_token');
+                const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
+                const type = hashParams.get('type') || queryParams.get('type');
 
-        if (type === 'recovery') {
-          message.innerHTML = 'Password recovery link detected. Please continue in the app.';
-          return;
-        }
+                if (type === 'recovery') {
+                    message.innerHTML = 'Password recovery link detected. Please continue in the app.';
+                    return;
+                }
 
-        // If tokens present, set session; else use built-in method
-        if (accessToken && refreshToken) {
-          const { data, error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-          if (error) throw error;
-          message.innerHTML = `<div class="success">Signed in as: ${data?.user?.email || 'unknown'}</div>`;
-        } else {
-          const { data, error } = await supabase.auth.getUser();
-          if (error) {
-            // Try exchanging code if present (PKCE / OAuth style)
-            const code = queryParams.get('code');
-            if (code) {
-              const { data: tokenData, error: tokenError } = await supabase.auth.exchangeCodeForSession(code);
-              if (tokenError) throw tokenError;
-              message.innerHTML = `<div class="success">Signed in as: ${tokenData?.user?.email || 'unknown'}</div>`;
-            } else {
-              throw error;
+                // If tokens present, set session; else use built-in method
+                if (accessToken && refreshToken) {
+                    const { data, error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+                    if (error) throw error;
+                    message.innerHTML = `<div class="success">Signed in as: ${data?.user?.email || 'unknown'}</div>`;
+                } else {
+                    const { data, error } = await supabase.auth.getUser();
+                    if (error) {
+                        // Try exchanging code if present (PKCE / OAuth style)
+                        const code = queryParams.get('code');
+                        if (code) {
+                            const { data: tokenData, error: tokenError } = await supabase.auth.exchangeCodeForSession(code);
+                            if (tokenError) throw tokenError;
+                            message.innerHTML = `<div class="success">Signed in as: ${tokenData?.user?.email || 'unknown'}</div>`;
+                        } else {
+                            throw error;
+                        }
+                    } else {
+                        message.innerHTML = `<div class="success">Signed in as: ${data?.user?.email || 'unknown'}</div>`;
+                    }
+                }
+
+                // After auth, check approval and route accordingly
+                const { data: dev } = await supabase
+                    .from('devtools_developers')
+                    .select('user_id')
+                    .eq('user_id', (await supabase.auth.getUser()).data?.user?.id)
+                    .limit(1);
+                const approved = dev && dev.length > 0;
+                setTimeout(() => {
+                    window.location.href = approved ? window.DEVTOOLS_HOME_URL : window.REQUEST_ACCESS_URL;
+                }, 800);
+            } catch (err) {
+                console.error(err);
+                message.innerHTML = `<div class="error">Authentication failed: ${err.message}. Ensure this URL is whitelisted in Supabase Auth Redirect URLs.</div>`;
+                retryBtn.style.display = 'inline-block';
             }
-          } else {
-            message.innerHTML = `<div class="success">Signed in as: ${data?.user?.email || 'unknown'}</div>`;
-          }
         }
 
-        // Redirect to DevTools Hub once authenticated
-        setTimeout(() => window.location.href = '../../index.html', 1200);
-      } catch (err) {
-        console.error(err);
-        message.innerHTML = `<div class="error">Authentication failed: ${err.message}. Ensure this URL is whitelisted in Supabase Auth Redirect URLs.</div>`;
-        retryBtn.style.display = 'inline-block';
-      }
-    }
+        retryBtn?.addEventListener('click', () => {
+            window.location.reload();
+        });
 
-    retryBtn?.addEventListener('click', () => {
-      window.location.reload();
-    });
-
-    completeMagicLink();
-  </script>
+        completeMagicLink();
+    </script>
 </body>
+
 </html>

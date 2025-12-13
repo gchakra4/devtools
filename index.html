@@ -10,6 +10,37 @@
 
 <body>
     <div class="container">
+        <!-- Supabase Auth Guard Config: set your project URL and anon key -->
+        <script>
+            window.SUPABASE_URL = window.SUPABASE_URL || 'https://YOUR-PROJECT-REF.supabase.co'
+            window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'YOUR_ANON_KEY'
+            window.REQUEST_ACCESS_URL = window.REQUEST_ACCESS_URL || 'https://yogique.life/request-access'
+            window.AUTH_START_URL = window.AUTH_START_URL || 'https://devtools.yogique.life/tools/auth-callback/index.html?start=1'
+        </script>
+        <script type="module">
+            import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4'
+            const supabase = createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY)
+            const { data: sessionData } = await supabase.auth.getSession()
+            const uid = sessionData?.session?.user?.id
+            if (!uid) {
+                // No session: send to auth start/magic link
+                window.location.href = window.AUTH_START_URL
+            } else {
+                // Check approval membership
+                const { data, error } = await supabase
+                    .from('devtools_developers')
+                    .select('user_id')
+                    .eq('user_id', uid)
+                    .limit(1)
+                if (error) {
+                    console.warn('Membership check failed', error)
+                }
+                if (!data || data.length === 0) {
+                    // Not approved: redirect to Request Access in the main app
+                    window.location.href = window.REQUEST_ACCESS_URL
+                }
+            }
+        </script>
         <header class="header">
             <h1>🛠️ DevTools Hub</h1>
             <p class="subtitle">Your collection of development tools and utilities</p>
@@ -28,52 +59,58 @@
                 </div>
                 <div class="tool-actions">
                     <a href="tools/supabase-backup/complete_guide/index.html" class="btn btn-primary">📖 Open Guide</a>
-                    <a href="https://github.com/gchakra4/devtools/tree/main/tools/supabase-backup" class="btn btn-secondary"
-                        target="_blank">🔗 GitHub</a>            </div>
+                    <a href="https://github.com/gchakra4/devtools/tree/main/tools/supabase-backup"
+                        class="btn btn-secondary" target="_blank">🔗 GitHub</a>
                 </div>
+            </div>
 
             <!-- Git Workflow Guide -->
             <div class="tool-card">
                 <div class="tool-icon"></div>
                 <h3>Git Workflow Guide</h3>
-                <p>Complete guide for managing multiple repositories, branches, and deployments. Learn how to work with dev and production branches.</p>
+                <p>Complete guide for managing multiple repositories, branches, and deployments. Learn how to work with
+                    dev and production branches.</p>
                 <div class="tool-meta">
                     <span class="badge">Git</span>
                     <span class="badge">Workflow</span>
                 </div>
                 <div class="tool-actions">
                     <a href="tools/git-workflow-guide/index.html" class="btn btn-primary"> Open Guide</a>
-                    <a href="https://github.com/gchakra4/devtools/tree/main/tools/git-workflow-guide" class="btn btn-secondary" target="_blank"> GitHub</a>
-                </div>\n\n            <!-- Auth Callback Tool -->\n            <div class="tool-card">\n                <div class="tool-icon"></div>\n                <h3>Auth Callback</h3>\n                <p>Handles Supabase magic-link authentication and routes back to the DevTools Hub.</p>\n                <div class="tool-meta">\n                    <span class="badge">Auth</span>\n                    <span class="badge">Supabase</span>\n                </div>\n                <div class="tool-actions">\n                    <a href="tools/auth-callback/index.html" class="btn btn-primary"> Open</a>\n                    <a href="https://github.com/gchakra4/devtools/tree/main/tools/auth-callback" class="btn btn-secondary" target="_blank"> GitHub</a>\n                </div>\n            </div>\n\n            <!-- Placeholder for future tools -->
-            <div class="tool-card placeholder">
-                <div class="tool-icon">➕</div>
-                <h3>Coming Soon</h3>
-                <p>More developer tools will be added here...</p>
-                <div class="tool-actions">
-                    <button class="btn btn-disabled" disabled>Coming Soon</button>
+                    <a href="https://github.com/gchakra4/devtools/tree/main/tools/git-workflow-guide"
+                        class="btn btn-secondary" target="_blank"> GitHub</a>
+                </div>\n\n <!-- Auth Callback Tool -->\n <div class="tool-card">\n <div class="tool-icon"></div>\n <h3>
+                        Auth Callback</h3>\n <p>Handles Supabase magic-link authentication and routes back to the
+                        DevTools Hub.</p>\n <div class="tool-meta">\n <span class="badge">Auth</span>\n <span
+                            class="badge">Supabase</span>\n </div>\n <div class="tool-actions">\n <a
+                            href="tools/auth-callback/index.html" class="btn btn-primary"> Open</a>\n <a
+                            href="https://github.com/gchakra4/devtools/tree/main/tools/auth-callback"
+                            class="btn btn-secondary" target="_blank"> GitHub</a>\n </div>\n </div>\n\n
+                <!-- Placeholder for future tools -->
+                <div class="tool-card placeholder">
+                    <div class="tool-icon">➕</div>
+                    <h3>Coming Soon</h3>
+                    <p>More developer tools will be added here...</p>
+                    <div class="tool-actions">
+                        <button class="btn btn-disabled" disabled>Coming Soon</button>
+                    </div>
+                </div>
+
+                <div class="tool-card placeholder">
+                    <div class="tool-icon">🚀</div>
+                    <h3>Your Next Tool</h3>
+                    <p>Add your own development utilities and scripts here</p>
+                    <div class="tool-actions">
+                        <button class="btn btn-disabled" disabled>Coming Soon</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="tool-card placeholder">
-                <div class="tool-icon">🚀</div>
-                <h3>Your Next Tool</h3>
-                <p>Add your own development utilities and scripts here</p>
-                <div class="tool-actions">
-                    <button class="btn btn-disabled" disabled>Coming Soon</button>
-                </div>
-            </div>
+            <footer class="footer">
+                <p>Built with ❤️ for developers | <a href="https://yogique.life" target="_blank">Yogique</a></p>
+            </footer>
         </div>
 
-        <footer class="footer">
-            <p>Built with ❤️ for developers | <a href="https://yogique.life" target="_blank">Yogique</a></p>
-        </footer>
-    </div>
-
-    <script src="js/main.js"></script>
+        <script src="js/main.js"></script>
 </body>
 
 </html>
-
-
-
-
