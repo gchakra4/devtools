@@ -40,6 +40,29 @@ devtools/
    - Set build directory to `/` (root)
    - Add custom domain: devtools.yogique.life
 
+## Netlify deployment and environment variables
+
+To make the DevTools site pick up the correct Supabase project and redirect URLs at deploy time, the site generates `config.js` from environment variables during the build. Add the following environment variables to your Netlify site (use the `dev_` prefixed names so the deployed site always points to the dev branch values):
+
+- `DEV_SUPABASE_URL` — e.g. `https://iddvvefpwgwmgpyelzcv.supabase.co`
+- `DEV_SUPABASE_ANON_KEY` — Supabase anon public key (safe to expose client-side)
+- `DEV_AUTH_START_URL` — optional; defaults to `https://devtools.yogique.life/tools/auth-callback/index.html?start=1`
+- `DEV_REQUEST_ACCESS_URL` — optional; defaults to `https://yogique.life/request-access`
+- `DEV_DEVTOOLS_HOME_URL` — optional; defaults to `https://devtools.yogique.life/`
+
+Netlify build step will run `npm run build` which executes `scripts/generate-config.js` to write `config.js` into the published folder.
+
+Quick deploy steps on Netlify:
+
+1. In your Netlify site settings → Build & deploy → Environment, add the variables above with values for your dev Supabase project.
+2. Make sure your `build` command in Netlify is set to `npm run build` and the publish directory points to this repo root (or the folder containing `index.html`).
+3. Trigger a deploy. On build, `config.js` will be generated with the `DEV_*` values and included in the site assets.
+
+Security notes:
+
+- Do NOT put Supabase service role keys into `config.js` or Netlify site envs that are exposed to client-side code. Service role keys are for server-side use only (Supabase Edge Functions or Netlify Functions) and should be stored in Supabase secrets or Netlify Function environment variables.
+- The `DEV_SUPABASE_ANON_KEY` is safe for client-side usage and required for the magic-link auth flow.
+
 ## 📦 Current Tools
 
 ### Supabase Backup & Restore
