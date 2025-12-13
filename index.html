@@ -10,12 +10,15 @@
 
 <body>
     <div class="container">
-        <!-- Supabase Auth Guard Config: set your project URL and anon key -->
+        <!-- Load centralized config -->
+        <script src="/config.js"></script>
         <script>
-            window.SUPABASE_URL = window.SUPABASE_URL || 'https://YOUR-PROJECT-REF.supabase.co'
-            window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'YOUR_ANON_KEY'
-            window.REQUEST_ACCESS_URL = window.REQUEST_ACCESS_URL || 'https://yogique.life/request-access'
-            window.AUTH_START_URL = window.AUTH_START_URL || 'https://devtools.yogique.life/tools/auth-callback/index.html?start=1'
+            const cfg = window.DEVTOOLS_CONFIG || {};
+            window.SUPABASE_URL = cfg.SUPABASE_URL || window.SUPABASE_URL;
+            window.SUPABASE_ANON_KEY = cfg.SUPABASE_ANON_KEY || window.SUPABASE_ANON_KEY;
+            window.REQUEST_ACCESS_URL = cfg.REQUEST_ACCESS_URL || window.REQUEST_ACCESS_URL;
+            window.AUTH_START_URL = cfg.AUTH_START_URL || window.AUTH_START_URL;
+            window.DEVTOOLS_HOME_URL = cfg.DEVTOOLS_HOME_URL || window.DEVTOOLS_HOME_URL;
         </script>
         <script type="module">
             import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4'
