@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Workflow Guide | Yogique Development</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 3px solid #6366f1;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #6366f1;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.25rem;
+            color: #6b7280;
+        }
+
+        .section {
+            margin-bottom: 3rem;
+        }
+
+        .section h2 {
+            font-size: 1.75rem;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .section h3 {
+            font-size: 1.35rem;
+            color: #4f46e5;
+            margin: 1.5rem 0 1rem;
+        }
+
+        .section p {
+            margin-bottom: 1rem;
+            color: #4b5563;
+        }
+
+        .code-block {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.8;
+        }
+
+        .code-block pre {
+            margin: 0;
+        }
+
+        .inline-code {
+            background: #f3f4f6;
+            color: #dc2626;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .success-box {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .workflow-card {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .workflow-card h4 {
+            color: #6366f1;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #6366f1;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
+        .back-button {
+            display: inline-block;
+            background: #6366f1;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.3s;
+            margin-top: 2rem;
+        }
+
+        .back-button:hover {
+            background: #4f46e5;
+        }
+
+        ul {
+            margin: 1rem 0 1rem 2rem;
+        }
+
+        li {
+            margin: 0.5rem 0;
+            color: #4b5563;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .section h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔀 Git Workflow Guide</h1>
+            <p>Complete guide for managing multiple repositories and branches</p>
+        </div>
+
+        <div class="section">
+            <h2>📁 Your Repository Structure</h2>
+            <div class="success-box">
+                <strong>✅ Current Setup:</strong>
+                <ul style="margin-top: 0.5rem;">
+                    <li><strong>gchakra4/yogique</strong> - Main application (yogique.life)</li>
+                    <li><strong>gchakra4/devtools</strong> - Developer tools and utilities</li>
+                </ul>
+            </div>
+
+            <div class="workflow-card">
+                <h4>📂 Local Folders:</h4>
+                <div class="code-block"><pre>D:\New folder\
+  ├── tryfix - Copy\    → gchakra4/yogique (main & dev branches)
+  └── devtools\         → gchakra4/devtools (main branch)</pre></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔄 Daily Development Workflow</h2>
+
+            <h3><span class="step-number">1</span>Work on Development Branch</h3>
+            <p>All day-to-day development happens on the <span class="inline-code">dev</span> branch:</p>
+            <div class="code-block"><pre># Switch to main project
+cd "D:\New folder\tryfix - Copy"
+
+# Make sure you're on dev branch
+git checkout dev
+
+# Check status
+git status
+
+# Make your changes in VS Code...
+# (Edit components, add features, etc.)
+
+# Add all changes
+git add .
+
+# Commit with descriptive message
+git commit -m "Added new booking feature"
+
+# Push to dev branch (deploys to dev.yogique.life)
+git push origin dev</pre></div>
+
+            <div class="info-box">
+                <strong>💡 Result:</strong> Changes automatically deploy to <strong>dev.yogique.life</strong> for testing
+            </div>
+
+            <h3><span class="step-number">2</span>Test on Development Site</h3>
+            <p>Visit <strong>dev.yogique.life</strong> and thoroughly test your changes:</p>
+            <ul>
+                <li>Test new features</li>
+                <li>Check for bugs</li>
+                <li>Verify responsive design</li>
+                <li>Test on different browsers</li>
+            </ul>
+
+            <h3><span class="step-number">3</span>Deploy to Production</h3>
+            <p>When everything works perfectly, merge to production:</p>
+            <div class="code-block"><pre># Switch to production branch
+git checkout main
+
+# Merge dev branch into main
+git merge dev
+
+# Push to production (deploys to yogique.life)
+git push origin main
+
+# Switch back to dev for next feature
+git checkout dev</pre></div>
+
+            <div class="success-box">
+                <strong>✅ Result:</strong> Changes are now live on <strong>yogique.life</strong>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔧 Working with DevTools Repository</h2>
+
+            <h3>Switch to DevTools Project</h3>
+            <div class="code-block"><pre># Switch to devtools folder
+cd "D:\New folder\devtools"
+
+# Check current status
+git status
+
+# Make changes (add new tools, update guides, etc.)
+
+# Add and commit
+git add .
+git commit -m "Added new developer tool"
+
+# Push to GitHub (deploys to devtools.yogique.life)
+git push origin main</pre></div>
+
+            <div class="info-box">
+                <strong>💡 Result:</strong> Updates automatically deploy to <strong>devtools.yogique.life</strong>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🚀 Quick Reference Commands</h2>
+
+            <div class="workflow-card">
+                <h4>Check Which Repository You're In:</h4>
+                <div class="code-block"><pre># Show current directory
+pwd
+
+# Show git repository URL
+git remote -v
+
+# Show current branch
+git branch</pre></div>
+            </div>
+
+            <div class="workflow-card">
+                <h4>Switch Between Projects:</h4>
+                <div class="code-block"><pre># Work on main app
+cd "D:\New folder\tryfix - Copy"
+
+# Work on devtools
+cd "D:\New folder\devtools"</pre></div>
+            </div>
+
+            <div class="workflow-card">
+                <h4>Switch Between Branches (Main App Only):</h4>
+                <div class="code-block"><pre># Switch to dev branch (for development)
+git checkout dev
+
+# Switch to main branch (for production)
+git checkout main
+
+# See all branches
+git branch -a</pre></div>
+            </div>
+
+            <div class="workflow-card">
+                <h4>Undo Changes (Before Commit):</h4>
+                <div class="code-block"><pre># Discard changes to specific file
+git checkout -- filename.js
+
+# Discard all changes
+git reset --hard</pre></div>
+            </div>
+
+            <div class="workflow-card">
+                <h4>Pull Latest Changes:</h4>
+                <div class="code-block"><pre># Update from GitHub
+git pull origin dev      # For dev branch
+git pull origin main     # For main branch</pre></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>⚠️ Important Guidelines</h2>
+
+            <div class="warning-box">
+                <strong>❌ Never commit directly to main branch!</strong>
+                <p style="margin-top: 0.5rem;">Always develop on <span class="inline-code">dev</span> branch first, test thoroughly, then merge to main.</p>
+            </div>
+
+            <div class="info-box">
+                <strong>✅ Best Practices:</strong>
+                <ul style="margin-top: 0.5rem;">
+                    <li>Always pull latest changes before starting work</li>
+                    <li>Commit frequently with clear messages</li>
+                    <li>Test on dev.yogique.life before merging to production</li>
+                    <li>Use descriptive commit messages (e.g., "Fixed booking form validation")</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🆘 Troubleshooting</h2>
+
+            <div class="workflow-card">
+                <h4>❓ I forgot which branch I'm on</h4>
+                <div class="code-block"><pre>git branch
+# * shows your current branch</pre></div>
+            </div>
+
+            <div class="workflow-card">
+                <h4>❓ I made changes on the wrong branch</h4>
+                <div class="code-block"><pre># Save your changes temporarily
+git stash
+
+# Switch to correct branch
+git checkout dev
+
+# Apply your changes
+git stash pop</pre></div>
+            </div>
+
+            <div class="workflow-card">
+                <h4>❓ I want to undo my last commit</h4>
+                <div class="code-block"><pre># Undo last commit, keep changes
+git reset --soft HEAD~1
+
+# Undo last commit, discard changes
+git reset --hard HEAD~1</pre></div>
+            </div>
+
+            <div class="workflow-card">
+                <h4>❓ Push was rejected (conflicts)</h4>
+                <div class="code-block"><pre># Pull latest changes first
+git pull origin dev
+
+# Resolve conflicts in VS Code
+# Then commit and push again
+git add .
+git commit -m "Merged latest changes"
+git push origin dev</pre></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Complete Workflow Example</h2>
+            <p>Here's a real-world example from start to finish:</p>
+
+            <div class="code-block"><pre># Monday morning - Start new feature
+cd "D:\New folder\tryfix - Copy"
+git checkout dev
+git pull origin dev        # Get latest changes
+
+# Work on feature in VS Code...
+
+git add .
+git commit -m "Added user profile page"
+git push origin dev
+
+# Test at dev.yogique.life - looks good!
+
+# Deploy to production
+git checkout main
+git merge dev
+git push origin main
+
+# Back to development
+git checkout dev
+
+# Later: Update devtools
+cd "D:\New folder\devtools"
+git add .
+git commit -m "Added new deployment guide"
+git push origin main</pre></div>
+        </div>
+
+        <div class="section">
+            <h2>🌐 Your Live Sites</h2>
+            <div class="success-box">
+                <ul style="margin-top: 0.5rem;">
+                    <li><strong>Production:</strong> <a href="https://yogique.life" target="_blank">yogique.life</a> (main branch)</li>
+                    <li><strong>Development:</strong> <a href="https://dev.yogique.life" target="_blank">dev.yogique.life</a> (dev branch)</li>
+                    <li><strong>DevTools:</strong> <a href="https://devtools.yogique.life" target="_blank">devtools.yogique.life</a> (devtools repo)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 3rem;">
+            <a href="../../index.html" class="back-button">← Back to DevTools Hub</a>
+        </div>
+    </div>
+</body>
+</html>
