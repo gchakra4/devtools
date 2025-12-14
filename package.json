@@ -1,9 +1,9 @@
 {
-  "name": "devtools-site",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "generate-config": "node scripts/generate-config.js",
-    "build": "npm run generate-config && echo \"No further build steps configured\""
-  }
+    "name": "devtools-site",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "generate-config": "node scripts/generate-config.js",
+        "build": "npm run generate-config && echo \"No further build steps configured\""
+    }
 }

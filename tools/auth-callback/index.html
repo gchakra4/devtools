@@ -72,123 +72,124 @@
         </div>
     </div>
 
-        <script type="module">
-            (async () => {
-                try {
-                    const lib = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm')
-                    const createClient = lib.createClient
-                    const SUPABASE_URL = window.SUPABASE_URL || "https://YOUR_PROJECT_REF.supabase.co";
-                    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "YOUR_ANON_KEY";
-                    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-                    window.supabaseClient = supabase
-                    // proceed with existing completeMagicLink flow after init
-                
-        const message = document.getElementById('message');
-        const retryBtn = document.getElementById('retry');
-
-        async function completeMagicLink() {
+    <script type="module">
+        (async () => {
             try {
-                const hashParams = new URLSearchParams(window.location.hash.substring(1));
-                const queryParams = new URLSearchParams(window.location.search);
+                const lib = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm')
+                const createClient = lib.createClient
+                const SUPABASE_URL = window.SUPABASE_URL || "https://YOUR_PROJECT_REF.supabase.co";
+                const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "YOUR_ANON_KEY";
+                const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+                window.supabaseClient = supabase
+                // proceed with existing completeMagicLink flow after init
 
-                const accessToken = hashParams.get('access_token') || queryParams.get('access_token');
-                const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
-                const code = queryParams.get('code');
-                const start = queryParams.get('start');
+                const message = document.getElementById('message');
+                const retryBtn = document.getElementById('retry');
 
-                // If this is the "start" path, render an email input so user can request magic link
-                if (start) {
-                    renderEmailForm();
-                    return;
-                }
+                async function completeMagicLink() {
+                    try {
+                        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                        const queryParams = new URLSearchParams(window.location.search);
 
-                // If tokens present, set session; else try exchanging code
-                if (accessToken && refreshToken) {
-                    const { data, error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-                    if (error) throw error;
-                    message.innerHTML = `<div class="success">Signed in as: ${data?.user?.email || 'unknown'}</div>`;
-                } else if (code) {
-                    const { data: tokenData, error: tokenError } = await supabase.auth.exchangeCodeForSession(code);
-                    if (tokenError) throw tokenError;
-                    message.innerHTML = `<div class="success">Signed in as: ${tokenData?.user?.email || 'unknown'}</div>`;
-                } else {
-                    // No tokens or code: try to get user (may return null)
-                    const { data, error } = await supabase.auth.getUser();
-                    if (error || !data?.user) {
-                        message.innerHTML = `<div class="status">No active session found. If you expected a magic link, request one below.</div>`;
-                        renderEmailForm();
-                        return;
+                        const accessToken = hashParams.get('access_token') || queryParams.get('access_token');
+                        const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
+                        const code = queryParams.get('code');
+                        const start = queryParams.get('start');
+
+                        // If this is the "start" path, render an email input so user can request magic link
+                        if (start) {
+                            renderEmailForm();
+                            return;
+                        }
+
+                        // If tokens present, set session; else try exchanging code
+                        if (accessToken && refreshToken) {
+                            const { data, error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+                            if (error) throw error;
+                            message.innerHTML = `<div class="success">Signed in as: ${data?.user?.email || 'unknown'}</div>`;
+                        } else if (code) {
+                            const { data: tokenData, error: tokenError } = await supabase.auth.exchangeCodeForSession(code);
+                            if (tokenError) throw tokenError;
+                            message.innerHTML = `<div class="success">Signed in as: ${tokenData?.user?.email || 'unknown'}</div>`;
+                        } else {
+                            // No tokens or code: try to get user (may return null)
+                            const { data, error } = await supabase.auth.getUser();
+                            if (error || !data?.user) {
+                                message.innerHTML = `<div class="status">No active session found. If you expected a magic link, request one below.</div>`;
+                                renderEmailForm();
+                                return;
+                            }
+                            message.innerHTML = `<div class="success">Signed in as: ${data.user.email || 'unknown'}</div>`;
+                        }
+
+                        // After auth, check approval and route accordingly
+                        const user = (await supabase.auth.getUser()).data?.user;
+                        const { data: dev } = await supabase
+                            .from('devtools_developers')
+                            .select('user_id')
+                            .eq('user_id', user?.id)
+                            .limit(1);
+                        const approved = dev && dev.length > 0;
+                        setTimeout(() => {
+                            window.location.href = approved ? window.DEVTOOLS_HOME_URL : window.REQUEST_ACCESS_URL;
+                        }, 800);
+                    } catch (err) {
+                        console.error(err);
+                        message.innerHTML = `<div class="error">Authentication failed: ${err.message}. Ensure this URL is whitelisted in Supabase Auth Redirect URLs.</div>`;
+                        retryBtn.style.display = 'inline-block';
                     }
-                    message.innerHTML = `<div class="success">Signed in as: ${data.user.email || 'unknown'}</div>`;
                 }
 
-                // After auth, check approval and route accordingly
-                const user = (await supabase.auth.getUser()).data?.user;
-                const { data: dev } = await supabase
-                    .from('devtools_developers')
-                    .select('user_id')
-                    .eq('user_id', user?.id)
-                    .limit(1);
-                const approved = dev && dev.length > 0;
-                setTimeout(() => {
-                    window.location.href = approved ? window.DEVTOOLS_HOME_URL : window.REQUEST_ACCESS_URL;
-                }, 800);
-            } catch (err) {
-                console.error(err);
-                message.innerHTML = `<div class="error">Authentication failed: ${err.message}. Ensure this URL is whitelisted in Supabase Auth Redirect URLs.</div>`;
-                retryBtn.style.display = 'inline-block';
-            }
-        }
+                retryBtn?.addEventListener('click', () => {
+                    window.location.reload();
+                });
 
-        retryBtn?.addEventListener('click', () => {
-            window.location.reload();
-        });
+                function renderEmailForm() {
+                    // Clear message and show a simple email form in the message box
+                    message.innerHTML = '';
+                    const form = document.createElement('form');
+                    form.style.display = 'flex';
+                    form.style.flexDirection = 'column';
+                    form.style.gap = '8px';
 
-        function renderEmailForm() {
-            // Clear message and show a simple email form in the message box
-            message.innerHTML = '';
-            const form = document.createElement('form');
-            form.style.display = 'flex';
-            form.style.flexDirection = 'column';
-            form.style.gap = '8px';
+                    const input = document.createElement('input');
+                    input.type = 'email';
+                    input.placeholder = 'you@company.com';
+                    input.required = true;
+                    input.style.padding = '10px';
 
-            const input = document.createElement('input');
-            input.type = 'email';
-            input.placeholder = 'you@company.com';
-            input.required = true;
-            input.style.padding = '10px';
+                    const btn = document.createElement('button');
+                    btn.type = 'submit';
+                    btn.className = 'btn btn-primary';
+                    btn.textContent = 'Send magic link';
 
-            const btn = document.createElement('button');
-            btn.type = 'submit';
-            btn.className = 'btn btn-primary';
-            btn.textContent = 'Send magic link';
+                    const info = document.createElement('div');
+                    info.className = 'status';
 
-            const info = document.createElement('div');
-            info.className = 'status';
+                    form.appendChild(input);
+                    form.appendChild(btn);
+                    form.appendChild(info);
 
-            form.appendChild(input);
-            form.appendChild(btn);
-            form.appendChild(info);
+                    form.addEventListener('submit', async (ev) => {
+                        ev.preventDefault();
+                        info.textContent = '';
+                        try {
+                            btn.disabled = true;
+                            const email = input.value.trim();
+                            const callbackUrl = window.DEVTOOLS_AUTH_CALLBACK_URL || 'https://devtools.yogique.life/tools/auth-callback/index.html';
+                            const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: callbackUrl } });
+                            if (error) throw error;
+                            info.textContent = 'Check your email for the magic link.';
+                        } catch (e) {
+                            console.error(e);
+                            info.textContent = 'Failed to send magic link. ' + (e.message || e.toString());
+                        } finally {
+                            btn.disabled = false;
+                        }
+                    });
 
-            form.addEventListener('submit', async (ev) => {
-                ev.preventDefault();
-                info.textContent = '';
-                try {
-                    btn.disabled = true;
-                    const email = input.value.trim();
-                    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.href } });
-                    if (error) throw error;
-                    info.textContent = 'Check your email for the magic link.';
-                } catch (e) {
-                    console.error(e);
-                    info.textContent = 'Failed to send magic link. ' + (e.message || e.toString());
-                } finally {
-                    btn.disabled = false;
+                    message.appendChild(form);
                 }
-            });
-
-            message.appendChild(form);
-        }
 
                 // Start
                 completeMagicLink();
