@@ -6,7 +6,8 @@ const cfg = {
     SUPABASE_ANON_KEY: process.env.DEV_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '',
     AUTH_START_URL: process.env.DEV_AUTH_START_URL || process.env.AUTH_START_URL || 'https://devtools.yogique.life/tools/auth-callback/index.html?start=1',
     REQUEST_ACCESS_URL: process.env.DEV_REQUEST_ACCESS_URL || process.env.REQUEST_ACCESS_URL || 'https://yogique.life/request-access',
-    DEVTOOLS_HOME_URL: process.env.DEV_DEVTOOLS_HOME_URL || process.env.DEVTOOLS_HOME_URL || 'https://devtools.yogique.life/'
+    DEVTOOLS_HOME_URL: process.env.DEV_DEVTOOLS_HOME_URL || process.env.DEVTOOLS_HOME_URL || 'https://devtools.yogique.life/',
+    DEVTOOLS_AUTH_CALLBACK_URL: process.env.DEV_DEVTOOLS_AUTH_CALLBACK_URL || process.env.DEVTOOLS_AUTH_CALLBACK_URL || 'https://devtools.yogique.life/tools/auth-callback/index.html'
 }
 
 const out = `window.DEVTOOLS_CONFIG = ${JSON.stringify(cfg, null, 2)};
@@ -15,6 +16,7 @@ window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || window.DEVTOOLS_CONFIG.SU
 window.AUTH_START_URL = window.AUTH_START_URL || window.DEVTOOLS_CONFIG.AUTH_START_URL;
 window.REQUEST_ACCESS_URL = window.REQUEST_ACCESS_URL || window.DEVTOOLS_CONFIG.REQUEST_ACCESS_URL;
 window.DEVTOOLS_HOME_URL = window.DEVTOOLS_HOME_URL || window.DEVTOOLS_CONFIG.DEVTOOLS_HOME_URL;
+window.DEVTOOLS_AUTH_CALLBACK_URL = window.DEVTOOLS_AUTH_CALLBACK_URL || window.DEVTOOLS_CONFIG.DEVTOOLS_AUTH_CALLBACK_URL;
 `
 
 const outPath = path.join(__dirname, '..', 'config.js')
