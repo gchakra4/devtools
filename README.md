@@ -71,6 +71,12 @@ Complete backup and migration solution for Supabase projects.
 - **Guide:** [Complete Guide](tools/supabase-backup/complete_guide/index.html)
 - **GitHub:** [backup-tools branch](https://github.com/gchakra4/yogique/tree/backup-tools)
 
+### Notification System
+Admin guide for the notification system covering email (Resend), WhatsApp (Meta Business API), queue processing, and monitoring.
+- **Location:** `tools/notification-system-guide/`
+- **Guide:** [Overview](tools/notification-system-guide/index.html)
+- **Contents:** `architecture.html`, `components.html`, `configuration.html`, `queue-management.html`, `troubleshooting.html`
+
 ## 🎨 Customization
 
 ### Adding a New Tool Card

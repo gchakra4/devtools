@@ -14,14 +14,21 @@
         <script src="/config.js"></script>
         <script>
             const cfg = window.DEVTOOLS_CONFIG || {};
-            window.SUPABASE_URL = cfg.SUPABASE_URL || window.SUPABASE_URL;
-            window.SUPABASE_ANON_KEY = cfg.SUPABASE_ANON_KEY || window.SUPABASE_ANON_KEY;
-            window.REQUEST_ACCESS_URL = cfg.REQUEST_ACCESS_URL || window.REQUEST_ACCESS_URL;
-            window.AUTH_START_URL = cfg.AUTH_START_URL || window.AUTH_START_URL;
-            window.DEVTOOLS_HOME_URL = cfg.DEVTOOLS_HOME_URL || window.DEVTOOLS_HOME_URL;
+            window.SUPABASE_URL = cfg.SUPABASE_URL || window.SUPABASE_URL || '';
+            window.SUPABASE_ANON_KEY = cfg.SUPABASE_ANON_KEY || window.SUPABASE_ANON_KEY || '';
+            // Fallback to local pages when running via file:// or without a generated config.js
+            window.REQUEST_ACCESS_URL = cfg.REQUEST_ACCESS_URL || window.REQUEST_ACCESS_URL || 'index.html';
+            window.AUTH_START_URL = cfg.AUTH_START_URL || window.AUTH_START_URL || 'tools/auth-callback/index.html';
+            window.DEVTOOLS_HOME_URL = cfg.DEVTOOLS_HOME_URL || window.DEVTOOLS_HOME_URL || 'index.html';
         </script>
         <script type="module">
             (async () => {
+                // If Supabase is not configured (local/file:// preview), skip auth checks
+                if (!window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) {
+                    console.info('No Supabase config detected — running in local/demo mode. Auth redirects disabled.');
+                    return;
+                }
+
                 try {
                     const lib = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm')
                     const createClient = lib.createClient
@@ -115,6 +122,20 @@
                         <button class="btn btn-disabled" disabled>Coming Soon</button>
                     </div>
                 </div>
+                    <!-- Notification System Guide -->
+                    <div class="tool-card">
+                        <div class="tool-icon">🔔</div>
+                        <h3>Notification System</h3>
+                        <p>Admin guide for the notification system: email and WhatsApp delivery, queue processing, and monitoring.</p>
+                        <div class="tool-meta">
+                            <span class="badge">Notifications</span>
+                            <span class="badge">Monitoring</span>
+                        </div>
+                        <div class="tool-actions">
+                            <a href="tools/notification-system-guide/index.html" class="btn btn-primary">📖 Open Guide</a>
+                            <a href="https://github.com/gchakra4/devtools/tree/main/tools/notification-system-guide" class="btn btn-secondary" target="_blank">🔗 GitHub</a>
+                        </div>
+                    </div>
             </div>
 
             <footer class="footer">
