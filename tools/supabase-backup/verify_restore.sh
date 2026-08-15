@@ -203,8 +203,8 @@ fi
 # =============================================================================
 log_info "Checking project status..."
 
-if supabase projects list --output json 2>/dev/null | jq -e ".[] | select(.reference_id == \"$NEW_PROJECT_REF\")" >/dev/null; then
-    PROJECT_INFO=$(supabase projects list --output json | jq ".[] | select(.reference_id == \"$NEW_PROJECT_REF\")")
+if supabase projects list --output json 2>/dev/null | jq -e --arg ref "$NEW_PROJECT_REF" '.[] | select(.reference_id == $ref)' >/dev/null; then
+    PROJECT_INFO=$(supabase projects list --output json | jq --arg ref "$NEW_PROJECT_REF" '.[] | select(.reference_id == $ref)')
     PROJECT_NAME=$(echo "$PROJECT_INFO" | jq -r '.name')
     PROJECT_REGION=$(echo "$PROJECT_INFO" | jq -r '.region')
     

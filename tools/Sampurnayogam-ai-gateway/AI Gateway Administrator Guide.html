@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sampurnayogam AI Gateway — Administrator & System Architecture Manual</title>
+  <meta name="description" content="Production-grade Administrator & Technical Manual for Sampurnayogam's AI Gateway System. Covers architecture, role routing, prompt modes, adapters, database schemas, NAS & Supabase deployments, and n8n workflows.">
+  <style>
+    :root {
+      --bg-main: #0B0F19;
+      --bg-surface: #111827;
+      --bg-surface-elevated: #1F2937;
+      --bg-code: #030712;
+      --border-color: #374151;
+      --border-subtle: #1F2937;
+      --text-primary: #F9FAFB;
+      --text-secondary: #9CA3AF;
+      --text-muted: #6B7280;
+      --primary: #3B82F6;
+      --primary-hover: #2563EB;
+      --primary-glow: rgba(59, 130, 246, 0.25);
+      --accent: #8B5CF6;
+      --success: #10B981;
+      --success-bg: rgba(16, 185, 129, 0.1);
+      --warning: #F59E0B;
+      --warning-bg: rgba(245, 158, 11, 0.1);
+      --danger: #EF4444;
+      --danger-bg: rgba(239, 68, 68, 0.1);
+      --info: #06B6D4;
+      --info-bg: rgba(6, 182, 212, 0.1);
+      --sidebar-width: 320px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      font-size: 16px;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      line-height: 1.65;
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Sidebar Navigation */
+    aside#sidebar {
+      width: var(--sidebar-width);
+      background-color: var(--bg-surface);
+      border-right: 1px solid var(--border-color);
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar-header {
+      padding: 24px 20px 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      background-color: var(--bg-surface);
+      z-index: 10;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-title span.badge {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .brand-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .search-box {
+      margin-top: 14px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 10px 12px 10px 34px;
+      background-color: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-box input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-glow);
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      fill: var(--text-muted);
+    }
+
+    nav.toc-nav {
+      padding: 16px 12px 32px 12px;
+      flex-grow: 1;
+    }
+
+    .nav-category {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin: 20px 8px 8px 8px;
+    }
+
+    .nav-category:first-of-type {
+      margin-top: 4px;
+    }
+
+    ul.nav-list {
+      list-style: none;
+    }
+
+    ul.nav-list li a {
+      display: block;
+      padding: 7px 10px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.84rem;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+      line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    ul.nav-list li a:hover {
+      color: #FFFFFF;
+      background-color: var(--bg-surface-elevated);
+      padding-left: 14px;
+    }
+
+    ul.nav-list li a.active {
+      color: #FFFFFF;
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.2), transparent);
+      border-left: 3px solid var(--primary);
+      font-weight: 600;
+    }
+
+    /* Main Content */
+    main#content {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      max-width: calc(100vw - var(--sidebar-width));
+      padding: 40px 60px 100px 60px;
+    }
+
+    /* Header & Badges */
+    .doc-header {
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 28px;
+      margin-bottom: 40px;
+    }
+
+    h1.doc-title {
+      font-size: 2.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #FFFFFF;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    .doc-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      align-items: center;
+    }
+
+    .meta-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .meta-tag.verified {
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #34D399;
+      background-color: var(--success-bg);
+    }
+
+    /* Section Typography */
+    section.doc-section {
+      margin-bottom: 64px;
+      scroll-margin-top: 30px;
+    }
+
+    h2 {
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2 .sec-num {
+      color: var(--primary);
+      font-size: 1.15rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #F3F4F6;
+      margin: 28px 0 12px 0;
+    }
+
+    h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #E5E7EB;
+      margin: 20px 0 8px 0;
+    }
+
+    p {
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      font-size: 0.96rem;
+    }
+
+    ul, ol {
+      margin-bottom: 18px;
+      padding-left: 24px;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    strong {
+      color: #FFFFFF;
+    }
+
+    /* Inline Code and Code Blocks */
+    code:not(pre code) {
+      font-family: var(--font-mono);
+      font-size: 0.85em;
+      background-color: var(--bg-surface-elevated);
+      color: #93C5FD;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .code-container {
+      position: relative;
+      background-color: var(--bg-code);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      margin: 18px 0 24px 0;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      background-color: #0d1117;
+      border-bottom: 1px solid var(--border-subtle);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .code-header span.lang {
+      text-transform: uppercase;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    button.copy-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+
+    button.copy-btn:hover {
+      background-color: var(--bg-surface-elevated);
+      color: #FFFFFF;
+      border-color: var(--primary);
+    }
+
+    button.copy-btn.copied {
+      background-color: var(--success-bg);
+      color: var(--success);
+      border-color: var(--success);
+    }
+
+    pre {
+      padding: 16px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: #E2E8F0;
+    }
+
+    /* Tables */
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      margin: 20px 0 28px 0;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background-color: var(--bg-surface);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--bg-surface-elevated);
+      color: #FFFFFF;
+      padding: 12px 16px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Callouts / Alerts */
+    .callout {
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border-left: 4px solid;
+      background-color: var(--bg-surface);
+      font-size: 0.93rem;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .callout.info {
+      border-color: var(--info);
+      background-color: var(--info-bg);
+      color: #CFFAFE;
+    }
+    .callout.info .callout-title { color: #38BDF8; }
+
+    .callout.warning {
+      border-color: var(--warning);
+      background-color: var(--warning-bg);
+      color: #FEF3C7;
+    }
+    .callout.warning .callout-title { color: #FBBF24; }
+
+    .callout.danger {
+      border-color: var(--danger);
+      background-color: var(--danger-bg);
+      color: #FEE2E2;
+    }
+    .callout.danger .callout-title { color: #F87171; }
+
+    .callout.success {
+      border-color: var(--success);
+      background-color: var(--success-bg);
+      color: #D1FAE5;
+    }
+    .callout.success .callout-title { color: #34D399; }
+
+    .callout p {
+      color: inherit;
+      margin-bottom: 0;
+    }
+
+    /* SVG Diagrams Container */
+    .diagram-container {
+      background: radial-gradient(circle at center, #1E293B, #0F172A);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px 20px;
+      margin: 24px 0 32px 0;
+      overflow-x: auto;
+      text-align: center;
+    }
+
+    .diagram-container svg {
+      max-width: 100%;
+      height: auto;
+      display: inline-block;
+    }
+
+    .diagram-caption {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 12px;
+      font-style: italic;
+    }
+
+    /* Mobile Nav Toggle */
+    .mobile-nav-toggle {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 52px;
+      height: 52px;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 200;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    .mobile-nav-toggle svg {
+      width: 24px;
+      height: 24px;
+      fill: #FFFFFF;
+    }
+
+    /* Back to top */
+    .back-to-top {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-decoration: none;
+      margin-top: 40px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-surface);
+      transition: all 0.2s;
+    }
+
+    .back-to-top:hover {
+      color: #FFFFFF;
+      border-color: var(--primary);
+    }
+
+    /* Admin Action Box */
+    .action-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .step-card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      position: relative;
+    }
+
+    .step-num {
+      position: absolute;
+      top: -10px;
+      left: 16px;
+      background-color: var(--primary);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .step-card h5 {
+      margin-top: 6px;
+      font-size: 0.95rem;
+      color: #FFFFFF;
+      margin-bottom: 8px;
+    }
+
+    .step-card p {
+      font-size: 0.85rem;
+      margin-bottom: 0;
+      color: var(--text-secondary);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      aside#sidebar {
+        transform: translateX(-100%);
+      }
+      aside#sidebar.open {
+        transform: translateX(0);
+      }
+      main#content {
+        margin-left: 0;
+        max-width: 100vw;
+        padding: 30px 24px 80px 24px;
+      }
+      .mobile-nav-toggle {
+        display: flex;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MOBILE MENU BUTTON -->
+  <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle Navigation Menu">
+    <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+  </button>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-title">
+        Sampurnayogam <span class="badge">Gateway</span>
+      </div>
+      <div class="brand-subtitle">AI Gateway Administrator Manual</div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input type="text" id="docSearch" placeholder="Search documentation..." autocomplete="off">
+      </div>
+    </div>
+
+    <nav class="toc-nav">
+      <div class="nav-category">Core Concepts</div>
+      <ul class="nav-list">
+        <li><a href="#sec-1">1. What is the AI Gateway?</a></li>
+        <li><a href="#sec-2">2. High-Level Architecture</a></li>
+        <li><a href="#sec-3">3. Complete Request Lifecycle</a></li>
+        <li><a href="#sec-4">4. Role / Model / Provider Model</a></li>
+        <li><a href="#sec-5">5. Database Schema & Tables</a></li>
+        <li><a href="#sec-6">6. Prompt Modes (Template vs Direct)</a></li>
+        <li><a href="#sec-7">7. Adapter Architecture</a></li>
+      </ul>
+
+      <div class="nav-category">Administration & Operations</div>
+      <ul class="nav-list">
+        <li><a href="#sec-8">8. Adding a New AI Provider</a></li>
+        <li><a href="#sec-9">9. Adding a New Model</a></li>
+        <li><a href="#sec-10">10. Changing a Model for a Role</a></li>
+        <li><a href="#sec-11">11. Changing Model Providers</a></li>
+        <li><a href="#sec-12">12. Secrets & API Keys</a></li>
+      </ul>
+
+      <div class="nav-category">Infrastructure & Deployment</div>
+      <ul class="nav-list">
+        <li><a href="#sec-13">13. NAS Docker Deployment</a></li>
+        <li><a href="#sec-14">14. NAS Source Code Updates</a></li>
+        <li><a href="#sec-15">15. Supabase Edge Deployment</a></li>
+        <li><a href="#sec-16">16. Supabase ↔ GitHub CI/CD</a></li>
+        <li><a href="#sec-17">17. NAS ↔ GitHub Automation</a></li>
+        <li><a href="#sec-18">18. NAS ↔ Supabase Failover</a></li>
+      </ul>
+
+      <div class="nav-category">Workflows & Integrations</div>
+      <ul class="nav-list">
+        <li><a href="#sec-19">19. n8n Workflow Integration</a></li>
+        <li><a href="#sec-20">20. Image Generation Flow</a></li>
+        <li><a href="#sec-21">21. Image Regeneration Flow</a></li>
+      </ul>
+
+      <div class="nav-category">Maintenance & Reference</div>
+      <ul class="nav-list">
+        <li><a href="#sec-22">22. Debugging & Troubleshooting</a></li>
+        <li><a href="#sec-23">23. Logging & Observability</a></li>
+        <li><a href="#sec-24">24. Verified Test Commands</a></li>
+        <li><a href="#sec-25">25. Security Guidelines</a></li>
+        <li><a href="#sec-26">26. Safe Change Management</a></li>
+        <li><a href="#sec-27">27. Rollback Procedures</a></li>
+        <li><a href="#sec-28">28. Administrator Quick Reference</a></li>
+        <li><a href="#sec-29">29. Architecture Decision Record</a></li>
+        <li><a href="#sec-30">30. Current System Inventory</a></li>
+        <li><a href="#sec-limitations">Documentation Limitations</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- MAIN DOCUMENTATION CONTENT -->
+  <main id="content">
+
+    <!-- DOCUMENT HEADER -->
+    <header class="doc-header">
+      <h1 class="doc-title">Sampurnayogam AI Gateway System</h1>
+      <p style="font-size: 1.1rem; color: #D1D5DB; margin-bottom: 16px;">
+        Production-grade Administrator & Technical Manual for Role-Based AI Orchestration, Multimodal Generation, Database Routing, and Dual Deployments (NAS + Supabase).
+      </p>
+      <div class="doc-meta">
+        <div class="meta-tag"><strong>Target Audience:</strong> System Administrators & Engineers</div>
+        <div class="meta-tag"><strong>Runtime:</strong> Deno / TypeScript</div>
+        <div class="meta-tag"><strong>Database:</strong> PostgreSQL (Supabase)</div>
+        <div class="meta-tag verified">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          Verified Against Codebase (August 2026)
+        </div>
+      </div>
+    </header>
+
+    <!-- SECTION 1 -->
+    <section id="sec-1" class="doc-section">
+      <h2><span class="sec-num">01</span> What is the AI Gateway?</h2>
+      <p>
+        The <strong>AI Gateway</strong> is a specialized, lightweight middleware service that sits between our automation orchestrator (n8n), frontend applications, and external Artificial Intelligence providers (such as Google Gemini, Alibaba DashScope, and OpenAI-compatible vendors).
+      </p>
+
+      <h3>The Fundamental Problem It Solves</h3>
+      <p>
+        In traditional automation workflows, each workflow node directly calls a specific AI provider API (e.g., calling Google's API with a hardcoded Gemini key, or Alibaba's WanX API with a hardcoded DashScope key). This causes severe architectural friction:
+      </p>
+      <ul>
+        <li><strong>Credential Sprawl:</strong> Sensitive API keys end up duplicated across dozens of n8n workflows, client apps, and configuration files.</li>
+        <li><strong>Vendor Lock-in & Hardcoding:</strong> If a model is deprecated, or if we want to switch the <code>writer</code> role from Gemini to Qwen or Claude, an administrator must manually open, edit, and re-test 20+ individual workflow nodes.</li>
+        <li><strong>Format Inconsistency:</strong> Google returns candidates in one structure, OpenAI in another, and Alibaba image models in another. Every workflow is forced to write brittle parsing logic.</li>
+      </ul>
+
+      <h3>How the AI Gateway Fixes This</h3>
+      <p>
+        With the AI Gateway, applications and workflows never talk directly to AI providers. Instead, workflows ask the Gateway for a <strong>Role</strong> (e.g., <em>"I need the Writer"</em> or <em>"I need the Image Generator"</em>).
+      </p>
+
+      <div class="diagram-container">
+        <svg viewBox="0 0 800 140" width="800" height="140">
+          <defs>
+            <linearGradient id="boxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#1E293B"/>
+              <stop offset="100%" stop-color="#0F172A"/>
+            </linearGradient>
+            <linearGradient id="gwGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#2563EB"/>
+              <stop offset="100%" stop-color="#7C3AED"/>
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <!-- n8n Caller -->
+          <rect x="20" y="40" width="130" height="60" rx="8" fill="url(#boxGrad)" stroke="#3B82F6" stroke-width="2"/>
+          <text x="85" y="68" fill="#FFFFFF" font-family="sans-serif" font-size="13" font-weight="bold" text-anchor="middle">n8n Workflow</text>
+          <text x="85" y="85" fill="#94A3B8" font-family="monospace" font-size="10" text-anchor="middle">asks for "writer"</text>
+
+          <!-- Arrow 1 -->
+          <path d="M 150 70 L 200 70" stroke="#3B82F6" stroke-width="2" marker-end="url(#arrow)"/>
+          <polygon points="200,70 192,65 192,75" fill="#3B82F6"/>
+
+          <!-- AI Gateway -->
+          <rect x="210" y="30" width="160" height="80" rx="10" fill="url(#gwGrad)" stroke="#818CF8" stroke-width="2" filter="url(#glow)"/>
+          <text x="290" y="65" fill="#FFFFFF" font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">AI GATEWAY</text>
+          <text x="290" y="85" fill="#E0E7FF" font-family="sans-serif" font-size="10" text-anchor="middle">Resolves DB Route & Adapter</text>
+
+          <!-- Arrow 2 -->
+          <path d="M 370 70 L 420 70" stroke="#8B5CF6" stroke-width="2"/>
+          <polygon points="420,70 412,65 412,75" fill="#8B5CF6"/>
+
+          <!-- Supabase DB -->
+          <rect x="430" y="40" width="140" height="60" rx="8" fill="url(#boxGrad)" stroke="#10B981" stroke-width="2"/>
+          <text x="500" y="68" fill="#FFFFFF" font-family="sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Supabase DB</text>
+          <text x="500" y="85" fill="#6EE7B7" font-family="monospace" font-size="10" text-anchor="middle">Role → Model → Provider</text>
+
+          <!-- Arrow 3 -->
+          <path d="M 570 70 L 620 70" stroke="#10B981" stroke-width="2"/>
+          <polygon points="620,70 612,65 612,75" fill="#10B981"/>
+
+          <!-- External AI Provider -->
+          <rect x="630" y="40" width="150" height="60" rx="8" fill="url(#boxGrad)" stroke="#F59E0B" stroke-width="2"/>
+          <text x="705" y="68" fill="#FFFFFF" font-family="sans-serif" font-size="13" font-weight="bold" text-anchor="middle">External AI API</text>
+          <text x="705" y="85" fill="#FCD34D" font-family="sans-serif" font-size="10" text-anchor="middle">Gemini / Qwen / DashScope</text>
+        </svg>
+        <div class="diagram-caption">Figure 1.1: Core concept of Role-Based Decoupled AI Gateway Orchestration</div>
+      </div>
+
+      <div class="callout success">
+        <div class="callout-title">The Administrator's Superpower</div>
+        <p>
+          Because routing is stored in the database, you can switch an entire content pipeline from <strong>Qwen-Max (Alibaba)</strong> to <strong>Gemini-1.5-Pro (Google)</strong> by changing a single row in the <code>ai_roles</code> database table. Zero workflows need to be edited, tested, or redeployed.
+        </p>
+      </div>
+    </section>
+
+    <!-- SECTION 2 -->
+    <section id="sec-2" class="doc-section">
+      <h2><span class="sec-num">02</span> High-Level Architecture (Dual Deployments)</h2>
+      <p>
+        The Sampurnayogam architecture supports <strong>two identical deployment targets</strong> for the AI Gateway codebase. Both environments run the exact same TypeScript code, connect to the exact same Supabase database, and understand the exact same request/response contracts.
+      </p>
+
+      <div class="diagram-container">
+        <svg viewBox="0 0 800 360" width="800" height="360">
+          <!-- Background Zones -->
+          <rect x="10" y="10" width="370" height="340" rx="10" fill="#111827" stroke="#374151" stroke-dasharray="4"/>
+          <text x="30" y="35" fill="#60A5FA" font-family="sans-serif" font-weight="bold" font-size="12">DEPLOYMENT A: LOCAL NAS (ON-PREM)</text>
+
+          <rect x="420" y="10" width="370" height="340" rx="10" fill="#111827" stroke="#374151" stroke-dasharray="4"/>
+          <text x="440" y="35" fill="#A78BFA" font-family="sans-serif" font-weight="bold" font-size="12">DEPLOYMENT B: SUPABASE CLOUD (EDGE)</text>
+
+          <!-- NAS Node -->
+          <rect x="40" y="60" width="310" height="50" rx="6" fill="#1F2937" stroke="#4B5563"/>
+          <text x="195" y="85" fill="#FFFFFF" font-family="sans-serif" font-size="12" text-anchor="middle">n8n Local Engine (Self-Hosted on NAS)</text>
+          <text x="195" y="100" fill="#9CA3AF" font-family="monospace" font-size="9" text-anchor="middle">http://ai-gateway:8000</text>
+
+          <line x1="195" y1="110" x2="195" y2="140" stroke="#60A5FA" stroke-width="2"/>
+
+          <rect x="40" y="140" width="310" height="70" rx="6" fill="#1E3A8A" stroke="#3B82F6"/>
+          <text x="195" y="165" fill="#FFFFFF" font-family="sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Docker Container: ai-gateway</text>
+          <text x="195" y="183" fill="#BFDBFE" font-family="sans-serif" font-size="10" text-anchor="middle">Deno 1.37+ Runtime (Port 8000 / 18000)</text>
+          <text x="195" y="198" fill="#93C5FD" font-family="monospace" font-size="9" text-anchor="middle">Secrets read via local Container Env (.env)</text>
+
+          <line x1="195" y1="210" x2="195" y2="245" stroke="#60A5FA" stroke-width="2"/>
+
+          <!-- Cloud Node -->
+          <rect x="450" y="60" width="310" height="50" rx="6" fill="#1F2937" stroke="#4B5563"/>
+          <text x="605" y="85" fill="#FFFFFF" font-family="sans-serif" font-size="12" text-anchor="middle">Client Apps / Webhooks / n8n Cloud</text>
+          <text x="605" y="100" fill="#9CA3AF" font-family="monospace" font-size="9" text-anchor="middle">https://&lt;project-ref&gt;.supabase.co/functions/v1/ai-gateway</text>
+
+          <line x1="605" y1="110" x2="605" y2="140" stroke="#A78BFA" stroke-width="2"/>
+
+          <rect x="450" y="140" width="310" height="70" rx="6" fill="#4C1D95" stroke="#8B5CF6"/>
+          <text x="605" y="165" fill="#FFFFFF" font-family="sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Supabase Edge Function: ai-gateway</text>
+          <text x="605" y="183" fill="#DDD6FE" font-family="sans-serif" font-size="10" text-anchor="middle">Global Deno Edge Runtime</text>
+          <text x="605" y="198" fill="#C4B5FD" font-family="monospace" font-size="9" text-anchor="middle">Secrets read via Supabase Vault Secrets</text>
+
+          <line x1="605" y1="210" x2="605" y2="245" stroke="#A78BFA" stroke-width="2"/>
+
+          <!-- Shared Database & AI Providers -->
+          <rect x="150" y="245" width="500" height="85" rx="8" fill="#064E3B" stroke="#10B981" stroke-width="2"/>
+          <text x="400" y="270" fill="#FFFFFF" font-family="sans-serif" font-size="14" font-weight="bold" text-anchor="middle">Shared Supabase PostgreSQL Database & AI Providers</text>
+          <text x="400" y="290" fill="#A7F3D0" font-family="sans-serif" font-size="11" text-anchor="middle">Tables: ai_roles, ai_models, ai_providers, ai_prompt_templates, image_assets</text>
+          <text x="400" y="310" fill="#D1FAE5" font-family="sans-serif" font-size="11" text-anchor="middle">External APIs: Google Gemini API | Alibaba DashScope / WanX API | OpenAI-Compatible</text>
+        </svg>
+        <div class="diagram-caption">Figure 2.1: Dual Deployment Architecture (NAS On-Prem vs. Supabase Edge Function)</div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Feature / Trait</th>
+              <th>NAS Docker Deployment (<code>http://ai-gateway:8000</code>)</th>
+              <th>Supabase Edge Deployment (<code>https://&lt;ref&gt;.supabase.co/...</code>)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Primary Location</strong></td>
+              <td>Synology NAS (Local LAN / Docker bridge)</td>
+              <td>Supabase Cloud Edge Network</td>
+            </tr>
+            <tr>
+              <td><strong>Access & Latency</strong></td>
+              <td>Internal Docker network (ultra-fast for local n8n)</td>
+              <td>Public HTTPS (Accessible from anywhere on the internet)</td>
+            </tr>
+            <tr>
+              <td><strong>Authentication</strong></td>
+              <td>None required on LAN (bypasses JWT on internal network)</td>
+              <td>Requires Bearer JWT (Supabase Anon Key or Service Role Key)</td>
+            </tr>
+            <tr>
+              <td><strong>Secret Resolution</strong></td>
+              <td>Loaded from NAS Container Environment (<code>.env</code> file)</td>
+              <td>Loaded from Supabase Edge Secrets Vault (<code>supabase secrets</code>)</td>
+            </tr>
+            <tr>
+              <td><strong>Best Used For</strong></td>
+              <td>High-frequency batch background runs, local automated workers</td>
+              <td>Public Webhooks, external apps, primary fallback when NAS is down</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 3 -->
+    <section id="sec-3" class="doc-section">
+      <h2><span class="sec-num">03</span> Complete Request Lifecycle</h2>
+      <p>
+        When any application or n8n workflow issues a request to the AI Gateway, the request executes through a strictly sequenced 12-step lifecycle.
+      </p>
+
+      <div class="diagram-container">
+        <svg viewBox="0 0 800 480" width="800" height="480">
+          <!-- Step 1 -->
+          <rect x="20" y="20" width="220" height="45" rx="6" fill="#1F2937" stroke="#3B82F6"/>
+          <text x="30" y="47" fill="#60A5FA" font-family="monospace" font-weight="bold" font-size="12">1. INCOMING REQUEST</text>
+          <text x="135" y="47" fill="#E5E7EB" font-family="sans-serif" font-size="10">n8n sends JSON</text>
+
+          <path d="M 240 42 L 280 42" stroke="#4B5563" stroke-width="2"/>
+
+          <!-- Step 2 -->
+          <rect x="280" y="20" width="220" height="45" rx="6" fill="#1F2937" stroke="#3B82F6"/>
+          <text x="290" y="47" fill="#60A5FA" font-family="monospace" font-weight="bold" font-size="12">2. VALIDATE METHOD</text>
+          <text x="420" y="47" fill="#E5E7EB" font-family="sans-serif" font-size="10">POST & CORS</text>
+
+          <path d="M 500 42 L 540 42" stroke="#4B5563" stroke-width="2"/>
+
+          <!-- Step 3 -->
+          <rect x="540" y="20" width="240" height="45" rx="6" fill="#1F2937" stroke="#3B82F6"/>
+          <text x="550" y="47" fill="#60A5FA" font-family="monospace" font-weight="bold" font-size="12">3. PARSE CONTRACT</text>
+          <text x="660" y="47" fill="#E5E7EB" font-family="sans-serif" font-size="10">Extract role, mode, type</text>
+
+          <!-- Row 2 -->
+          <path d="M 660 65 L 660 100" stroke="#4B5563" stroke-width="2"/>
+
+          <!-- Step 6 -->
+          <rect x="540" y="100" width="240" height="45" rx="6" fill="#1F2937" stroke="#10B981"/>
+          <text x="550" y="127" fill="#34D399" font-family="monospace" font-weight="bold" font-size="12">6. LOAD PROVIDER</text>
+          <text x="660" y="127" fill="#E5E7EB" font-family="sans-serif" font-size="10">Base URL, secret name</text>
+
+          <path d="M 540 122 L 500 122" stroke="#4B5563" stroke-width="2"/>
+
+          <!-- Step 5 -->
+          <rect x="280" y="100" width="220" height="45" rx="6" fill="#1F2937" stroke="#10B981"/>
+          <text x="290" y="127" fill="#34D399" font-family="monospace" font-weight="bold" font-size="12">5. RESOLVE MODEL</text>
+          <text x="400" y="127" fill="#E5E7EB" font-family="sans-serif" font-size="10">Query ai_models</text>
+
+          <path d="M 280 122 L 240 122" stroke="#4B5563" stroke-width="2"/>
+
+          <!-- Step 4 -->
+          <rect x="20" y="100" width="220" height="45" rx="6" fill="#1F2937" stroke="#10B981"/>
+          <text x="30" y="127" fill="#34D399" font-family="monospace" font-weight="bold" font-size="12">4. RESOLVE ROLE</text>
+          <text x="135" y="127" fill="#E5E7EB" font-family="sans-serif" font-size="10">Query ai_roles</text>
+
+          <!-- Row 3 -->
+          <path d="M 130 145 L 130 180" stroke="#4B5563" stroke-width="2"/>
+
+          <!-- Step 7 -->
+          <rect x="20" y="180" width="220" height="45" rx="6" fill="#1F2937" stroke="#F59E0B"/>
+          <text x="30" y="207" fill="#FBBF24" font-family="monospace" font-weight="bold" font-size="12">7. FETCH SECRET</text>
+          <text x="135" y="207" fill="#E5E7EB" font-family="sans-serif" font-size="10">Deno.env.get(key)</text>
+
+          <path d="M 240 202 L 280 202" stroke="#4B5563" stroke-width="2"/>
+
+          <!-- Step 8 -->
+          <rect x="280" y="180" width="220" height="45" rx="6" fill="#1F2937" stroke="#F59E0B"/>
+          <text x="290" y="207" fill="#FBBF24" font-family="monospace" font-weight="bold" font-size="12">8. PROMPT BRANCH</text>
+          <text x="400" y="207" fill="#E5E7EB" font-family="sans-serif" font-size="10">Direct vs Template</text>
+
+          <path d="M 500 202 L 540 202" stroke="#4B5563" stroke-width="2"/>
+
+          <!-- Step 9 -->
+          <rect x="540" y="180" width="240" height="45" rx="6" fill="#1F2937" stroke="#F59E0B"/>
+          <text x="550" y="207" fill="#FBBF24" font-family="monospace" font-weight="bold" font-size="12">9. ADAPTER SELECT</text>
+          <text x="660" y="207" fill="#E5E7EB" font-family="sans-serif" font-size="10">AdapterFactory</text>
+
+          <!-- Row 4 -->
+          <path d="M 660 225 L 660 260" stroke="#4B5563" stroke-width="2"/>
+
+          <!-- Step 12 -->
+          <rect x="540" y="260" width="240" height="45" rx="6" fill="#065F46" stroke="#10B981"/>
+          <text x="550" y="287" fill="#A7F3D0" font-family="monospace" font-weight="bold" font-size="12">12. RETURN JSON</text>
+          <text x="660" y="287" fill="#FFFFFF" font-family="sans-serif" font-size="10">Unified Response</text>
+
+          <path d="M 540 282 L 500 282" stroke="#4B5563" stroke-width="2"/>
+
+          <!-- Step 11 -->
+          <rect x="280" y="260" width="220" height="45" rx="6" fill="#1F2937" stroke="#8B5CF6"/>
+          <text x="290" y="287" fill="#C4B5FD" font-family="monospace" font-weight="bold" font-size="12">11. NORMALIZE</text>
+          <text x="400" y="287" fill="#E5E7EB" font-family="sans-serif" font-size="10">Map to GatewayResponse</text>
+
+          <path d="M 280 282 L 240 282" stroke="#4B5563" stroke-width="2"/>
+
+          <!-- Step 10 -->
+          <rect x="20" y="260" width="220" height="45" rx="6" fill="#1F2937" stroke="#8B5CF6"/>
+          <text x="30" y="287" fill="#C4B5FD" font-family="monospace" font-weight="bold" font-size="12">10. CALL PROVIDER</text>
+          <text x="140" y="287" fill="#E5E7EB" font-family="sans-serif" font-size="10">External API Fetch</text>
+
+          <!-- Step Details List -->
+          <rect x="20" y="330" width="760" height="130" rx="8" fill="#0F172A" stroke="#334155"/>
+          <text x="40" y="355" fill="#94A3B8" font-family="sans-serif" font-size="11"><tspan fill="#38BDF8" font-weight="bold">Step 1-3:</tspan> Request enters via HTTP POST, gets parsed by <code>parseGenerateRequest()</code> to extract <code>role</code>, <code>mode</code> ("template"|"direct"), and <code>type</code> ("text"|"image").</text>
+          <text x="40" y="380" fill="#94A3B8" font-family="sans-serif" font-size="11"><tspan fill="#34D399" font-weight="bold">Step 4-6:</tspan> Gateway reads <code>ai_roles</code> to find <code>primary_model_id</code>, then joins <code>ai_models</code> and <code>ai_providers</code> to get URL & secret name.</text>
+          <text x="40" y="405" fill="#FBBF24" font-family="sans-serif" font-size="11"><tspan fill="#F59E0B" font-weight="bold">Step 7-9:</tspan> Secret is securely resolved via <code>Deno.env.get()</code>. If mode is not "direct", prompt template is rendered. AdapterFactory selects adapter.</text>
+          <text x="40" y="430" fill="#94A3B8" font-family="sans-serif" font-size="11"><tspan fill="#A78BFA" font-weight="bold">Step 10-12:</tspan> Adapter executes HTTP fetch to vendor, maps proprietary result into <code>GatewayResponse</code>, and returns clean JSON to caller.</text>
+        </svg>
+        <div class="diagram-caption">Figure 3.1: Sequential 12-Step Execution Pipeline</div>
+      </div>
+    </section>
+
+    <!-- SECTION 4 -->
+    <section id="sec-4" class="doc-section">
+      <h2><span class="sec-num">04</span> Role / Model / Provider Model</h2>
+      <p>
+        The Gateway architecture is organized into three distinct, hierarchical layers:
+      </p>
+
+      <div class="action-steps">
+        <div class="step-card">
+          <div class="step-num">Layer 1</div>
+          <h5>ROLE (Logical Persona)</h5>
+          <p>
+            Represents <em>what job needs to be done</em>. Defined in table <code>ai_roles</code>. Examples: <code>writer</code>, <code>planner</code>, <code>image_generator</code>, <code>rewrite</code>, <code>image_planner</code>. Workflows only ever ask for a role.
+          </p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">Layer 2</div>
+          <h5>MODEL (Specific AI Intelligence)</h5>
+          <p>
+            Represents <em>the specific AI model version</em>. Defined in table <code>ai_models</code>. Examples: <code>gemini-1.5-pro</code>, <code>qwen3.8-max</code>, <code>qwen-image-2.0</code>. Links to a parent provider.
+          </p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">Layer 3</div>
+          <h5>PROVIDER (The AI Vendor)</h5>
+          <p>
+            Represents <em>who hosts and serves the model</em>. Defined in table <code>ai_providers</code>. Examples: <code>google</code>, <code>alibaba-dashscope</code>, <code>alibaba</code>. Holds the API base URL and secret variable name.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-title">Database Relationship Hierarchy</div>
+        <p>
+          <code>ai_roles.primary_model_id</code> ➔ references <code>ai_models.id</code><br>
+          <code>ai_models.provider_id</code> ➔ references <code>ai_providers.id</code>
+        </p>
+      </div>
+    </section>
+
+    <!-- SECTION 5 -->
+    <section id="sec-5" class="doc-section">
+      <h2><span class="sec-num">05</span> Database Schema & Configuration Reference</h2>
+      <p>
+        All routing and prompt configuration is managed through PostgreSQL tables in Supabase. Below is the comprehensive administrator specification for each table.
+      </p>
+
+      <h3>1. Table: <code>ai_roles</code></h3>
+      <p>Defines standard AI roles/personas and routes them to a primary model and an active prompt template.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Column Name</th>
+              <th>Data Type</th>
+              <th>Admin Actionable?</th>
+              <th>Purpose / Description</th>
+              <th>Example Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>id</code></td>
+              <td>UUID (PK)</td>
+              <td>No (Auto)</td>
+              <td>Unique system identifier for the role.</td>
+              <td><code>6ba7b810-9dad-11d1-80b4-00c04fd430c8</code></td>
+            </tr>
+            <tr>
+              <td><code>role_slug</code></td>
+              <td>TEXT (UNIQUE)</td>
+              <td>Do Not Change</td>
+              <td>The exact string that n8n workflows and client apps send in request payloads.</td>
+              <td><code>writer</code>, <code>image_generator</code></td>
+            </tr>
+            <tr>
+              <td><code>role_name</code></td>
+              <td>TEXT</td>
+              <td>Yes</td>
+              <td>Human-readable display name for admin UI.</td>
+              <td><code>Article Lead Writer</code></td>
+            </tr>
+            <tr>
+              <td><code>primary_model_id</code></td>
+              <td>UUID (FK)</td>
+              <td><strong>YES (Primary Switch)</strong></td>
+              <td>Foreign key to <code>ai_models.id</code>. Changing this immediately redirects the role to a new model.</td>
+              <td><code>uuid-of-qwen-model</code></td>
+            </tr>
+            <tr>
+              <td><code>fallback_model_id</code></td>
+              <td>UUID (FK)</td>
+              <td>Yes</td>
+              <td>Optional fallback model if primary fails (Schema ready).</td>
+              <td><code>NULL</code> or <code>uuid-of-backup-model</code></td>
+            </tr>
+            <tr>
+              <td><code>active_prompt_template_id</code></td>
+              <td>UUID (FK)</td>
+              <td><strong>YES (Template Switch)</strong></td>
+              <td>Foreign key to <code>ai_prompt_templates.id</code>. Used only in TEMPLATE mode.</td>
+              <td><code>uuid-of-active-template</code></td>
+            </tr>
+            <tr>
+              <td><code>is_active</code></td>
+              <td>BOOLEAN</td>
+              <td>Yes</td>
+              <td>Controls whether the role is enabled (default <code>true</code>).</td>
+              <td><code>true</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>2. Table: <code>ai_models</code></h3>
+      <p>Stores AI models and their technical capabilities.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Column Name</th>
+              <th>Data Type</th>
+              <th>Admin Actionable?</th>
+              <th>Purpose / Description</th>
+              <th>Example Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>id</code></td>
+              <td>UUID (PK)</td>
+              <td>No (Auto)</td>
+              <td>Unique model identifier.</td>
+              <td><code>e2b83b1a-3e11-4fa3-9f89-c439f0d11019</code></td>
+            </tr>
+            <tr>
+              <td><code>provider_id</code></td>
+              <td>UUID (FK)</td>
+              <td>Yes</td>
+              <td>Foreign key to <code>ai_providers.id</code> representing the vendor.</td>
+              <td><code>uuid-of-alibaba-provider</code></td>
+            </tr>
+            <tr>
+              <td><code>model_name</code></td>
+              <td>TEXT</td>
+              <td><strong>YES (Crucial)</strong></td>
+              <td>The exact technical model string required by the AI vendor's API.</td>
+              <td><code>qwen3.8-max</code>, <code>qwen-image-2.0</code>, <code>gemini-1.5-pro</code></td>
+            </tr>
+            <tr>
+              <td><code>display_name</code></td>
+              <td>TEXT</td>
+              <td>Yes</td>
+              <td>Human-friendly label.</td>
+              <td><code>Qwen 3.8 Max (Text)</code></td>
+            </tr>
+            <tr>
+              <td><code>supports_vision</code></td>
+              <td>BOOLEAN</td>
+              <td>Yes</td>
+              <td>Flag indicating multimodal input support.</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code>supports_streaming</code></td>
+              <td>BOOLEAN</td>
+              <td>Yes</td>
+              <td>Flag indicating SSE stream support.</td>
+              <td><code>true</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>3. Table: <code>ai_providers</code></h3>
+      <p>Defines AI vendor connection details, base URLs, protocol adapters, and environment secret names.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Column Name</th>
+              <th>Data Type</th>
+              <th>Admin Actionable?</th>
+              <th>Purpose / Description</th>
+              <th>Example Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>id</code></td>
+              <td>UUID (PK)</td>
+              <td>No (Auto)</td>
+              <td>Unique provider identifier.</td>
+              <td><code>fa143c08-410a-4299-8cf9-7681329c017d</code></td>
+            </tr>
+            <tr>
+              <td><code>slug</code></td>
+              <td>TEXT (UNIQUE)</td>
+              <td><strong>YES (Adapter Match)</strong></td>
+              <td>Unique slug (e.g. <code>google</code>, <code>alibaba</code>, <code>alibaba-dashscope</code>). AdapterFactory uses this to route requests.</td>
+              <td><code>alibaba-dashscope</code></td>
+            </tr>
+            <tr>
+              <td><code>name</code></td>
+              <td>TEXT</td>
+              <td>Yes</td>
+              <td>Descriptive vendor name.</td>
+              <td><code>Alibaba Cloud DashScope</code></td>
+            </tr>
+            <tr>
+              <td><code>api_base_url</code></td>
+              <td>TEXT</td>
+              <td><strong>YES (Crucial)</strong></td>
+              <td>The HTTP base URL for API requests. Must match the protocol and adapter expectations.</td>
+              <td><code>https://ws-w18...maas.aliyuncs.com/compatible-mode/v1</code></td>
+            </tr>
+            <tr>
+              <td><code>secret_name</code></td>
+              <td>TEXT</td>
+              <td><strong>YES (Key Binding)</strong></td>
+              <td>The exact name of the environment variable containing the API key. <strong>NEVER store the actual raw key here!</strong></td>
+              <td><code>DASHSCOPE_API_KEY</code>, <code>GOOGLE_API_KEY</code></td>
+            </tr>
+            <tr>
+              <td><code>metadata</code></td>
+              <td>JSONB</td>
+              <td>Yes</td>
+              <td>Protocol descriptor, e.g. <code>{"protocol": "openai-compatible"}</code> or <code>{"protocol": "google"}</code>.</td>
+              <td><code>{"protocol": "openai-compatible"}</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>4. Table: <code>ai_prompt_templates</code></h3>
+      <p>Maintains versioned prompt templates for text roles operating in TEMPLATE mode.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Column Name</th>
+              <th>Data Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>role_id</code></td>
+              <td>UUID (FK)</td>
+              <td>Links template to <code>ai_roles.id</code>.</td>
+            </tr>
+            <tr>
+              <td><code>version</code></td>
+              <td>INTEGER</td>
+              <td>Monotonically increasing version number (1, 2, 3...). Unique per role.</td>
+            </tr>
+            <tr>
+              <td><code>system_template</code></td>
+              <td>TEXT</td>
+              <td>System prompt template containing <code>{{ variable }}</code> placeholders.</td>
+            </tr>
+            <tr>
+              <td><code>user_template</code></td>
+              <td>TEXT</td>
+              <td>Optional user prompt template with <code>{{ variable }}</code> placeholders.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>5. Table: <code>image_assets</code></h3>
+      <p>Stores generated image metadata, Cloudinary hosting references, prompt records, and version history.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Column Name</th>
+              <th>Data Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>article_id</code></td>
+              <td>UUID (FK)</td>
+              <td>Foreign key to <code>articles.id</code>.</td>
+            </tr>
+            <tr>
+              <td><code>generation_request_id</code></td>
+              <td>TEXT</td>
+              <td>UUID returned by the AI Gateway to trace execution logs.</td>
+            </tr>
+            <tr>
+              <td><code>prompt</code></td>
+              <td>TEXT</td>
+              <td>The full educational/photorealistic prompt sent to the image model.</td>
+            </tr>
+            <tr>
+              <td><code>negative_prompt</code></td>
+              <td>TEXT</td>
+              <td>Negative prompt attributes (e.g. <code>low quality, blurry, deformed...</code>).</td>
+            </tr>
+            <tr>
+              <td><code>image_url</code></td>
+              <td>TEXT</td>
+              <td>The final secure Cloudinary URL.</td>
+            </tr>
+            <tr>
+              <td><code>cloudinary_public_id</code></td>
+              <td>TEXT</td>
+              <td>Cloudinary asset ID with version suffix (e.g. <code>yoga/article/cover-v2</code>).</td>
+            </tr>
+            <tr>
+              <td><code>version</code></td>
+              <td>INTEGER</td>
+              <td>Version number for regenerations (starts at 1).</td>
+            </tr>
+            <tr>
+              <td><code>is_primary</code></td>
+              <td>BOOLEAN</td>
+              <td>Flag indicating the currently active cover image for the article.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 6 -->
+    <section id="sec-6" class="doc-section">
+      <h2><span class="sec-num">06</span> Prompt Modes (TEMPLATE Mode vs. DIRECT Mode)</h2>
+      <p>
+        The AI Gateway supports two distinct operational prompt modes: <strong>TEMPLATE Mode</strong> (default) and <strong>DIRECT Mode</strong>.
+      </p>
+
+      <div class="diagram-container">
+        <svg viewBox="0 0 800 240" width="800" height="240">
+          <!-- Template Mode Branch -->
+          <rect x="20" y="20" width="360" height="200" rx="8" fill="#1E293B" stroke="#3B82F6"/>
+          <text x="35" y="45" fill="#60A5FA" font-family="sans-serif" font-weight="bold" font-size="13">MODE: "template" (Text Roles: Writer, Planner, Rewrite)</text>
+          <text x="35" y="70" fill="#94A3B8" font-family="sans-serif" font-size="11">1. Caller sends role & variables: <code>{ role: "writer", variables: {...} }</code></text>
+          <text x="35" y="95" fill="#94A3B8" font-family="sans-serif" font-size="11">2. Gateway reads <code>ai_roles.active_prompt_template_id</code></text>
+          <text x="35" y="120" fill="#94A3B8" font-family="sans-serif" font-size="11">3. Gateway fetches template from <code>ai_prompt_templates</code></text>
+          <text x="35" y="145" fill="#94A3B8" font-family="sans-serif" font-size="11">4. Interpolates variables into <code>{{ placeholders }}</code></text>
+          <text x="35" y="170" fill="#34D399" font-family="sans-serif" font-size="11" font-weight="bold">5. Passes compiled prompt to LLM Adapter</text>
+          <text x="35" y="195" fill="#F87171" font-family="sans-serif" font-size="10">Fails with 400 if active template is not configured in DB</text>
+
+          <!-- Direct Mode Branch -->
+          <rect x="420" y="20" width="360" height="200" rx="8" fill="#1E293B" stroke="#8B5CF6"/>
+          <text x="435" y="45" fill="#A78BFA" font-family="sans-serif" font-weight="bold" font-size="13">MODE: "direct" (Image Gen & Dynamic Custom Prompts)</text>
+          <text x="435" y="70" fill="#94A3B8" font-family="sans-serif" font-size="11">1. Caller sends explicit prompt: <code>{ mode: "direct", userPrompt: "..." }</code></text>
+          <text x="435" y="95" fill="#34D399" font-family="sans-serif" font-size="11" font-weight="bold">2. Gateway completely BYPASSES template lookup</text>
+          <text x="435" y="120" fill="#94A3B8" font-family="sans-serif" font-size="11">3. Resolves model & provider strictly for routing & credentials</text>
+          <text x="435" y="145" fill="#94A3B8" font-family="sans-serif" font-size="11">4. Passes <code>userPrompt</code> directly to Adapter</text>
+          <text x="435" y="170" fill="#A78BFA" font-family="sans-serif" font-size="11">5. Ideal for complex multi-step prompt builders (WanX/DALL-E)</text>
+          <text x="435" y="195" fill="#34D399" font-family="sans-serif" font-size="10">No template configuration needed in database</text>
+        </svg>
+        <div class="diagram-caption">Figure 6.1: Template Mode vs Direct Mode Logic Branching in Gateway</div>
+      </div>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">TypeScript Snippet from index.ts</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code>// Exact logic branching in supabase/functions/ai-gateway/index.ts
+let finalSystemPrompt = parsedRequest.systemPrompt;
+let finalUserPrompt = parsedRequest.userPrompt;
+
+if (mode !== "direct") {
+  // In TEMPLATE mode, resolve active template from database
+  const template = await resolveActivePromptTemplate(req, roleData.id);
+  if (!finalSystemPrompt) {
+    finalSystemPrompt = renderTemplate(template.systemTemplate, variables);
+  }
+  if (template.userTemplate) {
+    const renderedUserTemplate = renderTemplate(template.userTemplate, variables);
+    finalUserPrompt = finalUserPrompt ? renderedUserTemplate + "\n\n" + finalUserPrompt : renderedUserTemplate;
+  }
+}
+// In DIRECT mode, finalUserPrompt and finalSystemPrompt are passed straight to adapter!</code></pre>
+      </div>
+    </section>
+
+    <!-- SECTION 7 -->
+    <section id="sec-7" class="doc-section">
+      <h2><span class="sec-num">07</span> Adapter Architecture & Factory</h2>
+      <p>
+        Adapters isolate the Gateway core from the proprietary APIs of different AI vendors. The Gateway core only calls standard methods defined in <code>AIProviderAdapter</code> (<code>generate</code>, <code>generateStream</code>, <code>generateImage</code>).
+      </p>
+
+      <h3>Registered Adapters</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Adapter Name</th>
+              <th>Handled Protocols / Providers</th>
+              <th>Text Support</th>
+              <th>Image Support</th>
+              <th>Endpoint URL Construction</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>GoogleAdapter</code></td>
+              <td><code>google</code> / Gemini API</td>
+              <td>Yes (JSON & Markdown)</td>
+              <td>No</td>
+              <td><code>${baseUrl}/models/${model}:generateContent?key=${apiKey}</code></td>
+            </tr>
+            <tr>
+              <td><code>OpenAICompatibleAdapter</code></td>
+              <td><code>openai-compatible</code>, standard LLM endpoints</td>
+              <td>Yes (Streaming & Sync)</td>
+              <td>No</td>
+              <td><code>${baseUrl}/chat/completions</code> with <code>Bearer ${apiKey}</code></td>
+            </tr>
+            <tr>
+              <td><code>AlibabaAdapter</code></td>
+              <td><code>alibaba</code> / WanX Image Generation</td>
+              <td>No</td>
+              <td><strong>Yes</strong></td>
+              <td><code>${baseUrl}/services/aigc/multimodal-generation/generation</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>AdapterFactory Routing Logic</h3>
+      <p>
+        The <code>AdapterFactory</code> selects the appropriate adapter based on the provider slug and protocol:
+      </p>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">TypeScript Snippet from adapters/factory/factory.ts</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code>export class AdapterFactory {
+  static getAdapter(providerSlug: string, protocol?: string): AIProviderAdapter {
+    // Alibaba image provider slug must be checked FIRST
+    if (providerSlug.toLowerCase().startsWith("alibaba")) {
+      return new AlibabaAdapter();
+    }
+
+    if (protocol === "openai-compatible") {
+      return new OpenAICompatibleAdapter();
+    }
+
+    if (protocol === "google" || providerSlug.toLowerCase() === "google") {
+      return new GoogleAdapter();
+    }
+
+    throw new Error(`Unsupported AI provider protocol: ${protocol || providerSlug}`);
+  }
+}</code></pre>
+      </div>
+
+      <div class="callout warning">
+        <div class="callout-title">The Alibaba Special Case (Text vs Image Routing)</div>
+        <p>
+          Alibaba Cloud DashScope provides <strong>two completely different API styles</strong>:
+          <br>1. <strong>Text Models (Qwen):</strong> Use an OpenAI-compatible endpoint at <code>.../compatible-mode/v1/chat/completions</code>. In our database, this provider is registered as <code>alibaba-dashscope</code> with metadata <code>{"protocol": "openai-compatible"}</code>.
+          <br>2. <strong>Image Models (WanX / Qwen-Image):</strong> Use Alibaba's native multimodal API at <code>.../api/v1/services/aigc/multimodal-generation/generation</code>. In our database, this provider is registered as <code>alibaba</code> and uses <code>AlibabaAdapter</code>.
+        </p>
+      </div>
+    </section>
+
+    <!-- SECTION 8 -->
+    <section id="sec-8" class="doc-section">
+      <h2><span class="sec-num">08</span> Adding a New AI Provider</h2>
+      <p>
+        Follow this administrator guide to connect a new AI vendor to the Gateway.
+      </p>
+
+      <h3>Scenario A: Provider Uses an Existing Protocol (e.g. Any OpenAI-Compatible Provider like DeepSeek, Mistral, Groq, Perplexity)</h3>
+      <p>No code changes or deployments are required! You only need to add the secret and insert a row in the database.</p>
+
+      <div class="action-steps">
+        <div class="step-card">
+          <div class="step-num">Step 1</div>
+          <h5>Add API Key Secret</h5>
+          <p>
+            Add the secret to your environment.
+            <br><strong>NAS:</strong> Add <code>GROQ_API_KEY=gsk_...</code> to NAS <code>.env</code>.
+            <br><strong>Supabase:</strong> <code>supabase secrets set GROQ_API_KEY=gsk_...</code>
+          </p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">Step 2</div>
+          <h5>Insert Database Provider</h5>
+          <p>Run SQL in Supabase SQL Editor to register the provider with <code>{"protocol": "openai-compatible"}</code>.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-num">Step 3</div>
+          <h5>Insert Model & Link Role</h5>
+          <p>Create model in <code>ai_models</code> and link your role in <code>ai_roles</code>. Immediate live execution!</p>
+        </div>
+      </div>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">SQL</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code>-- Example: Adding Groq as an OpenAI-compatible provider
+INSERT INTO public.ai_providers (slug, name, api_base_url, secret_name, metadata)
+VALUES (
+  'groq',
+  'Groq Cloud',
+  'https://api.groq.com/openai/v1',
+  'GROQ_API_KEY',
+  '{"protocol": "openai-compatible"}'::jsonb
+);
+
+-- Register a model under this new provider
+INSERT INTO public.ai_models (provider_id, model_name, display_name, context_window_tokens, max_output_tokens)
+VALUES (
+  (SELECT id FROM public.ai_providers WHERE slug = 'groq'),
+  'llama-3.3-70b-versatile',
+  'Llama 3.3 70B (Groq)',
+  128000,
+  8192
+);</code></pre>
+      </div>
+
+      <h3>Scenario B: Provider Requires a Brand New Adapter (e.g. Anthropic Claude native API)</h3>
+      <ol>
+        <li>Create <code>supabase/functions/ai-gateway/adapters/anthropic/adapter.ts</code> implementing <code>AIProviderAdapter</code>.</li>
+        <li>Register the protocol in <code>supabase/functions/ai-gateway/adapters/factory/factory.ts</code>.</li>
+        <li>Commit and deploy the updated Gateway to Supabase Edge and NAS Docker.</li>
+        <li>Insert the provider and model records into the database.</li>
+      </ol>
+    </section>
+
+    <!-- SECTION 9 -->
+    <section id="sec-9" class="doc-section">
+      <h2><span class="sec-num">09</span> Adding a New Model</h2>
+      <p>
+        When an existing provider releases a new model (for example, Google releases <code>gemini-2.0-flash</code> or Alibaba releases <code>qwen3-max-2026</code>), add it with a single SQL query:
+      </p>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">SQL</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code>-- Add a new model to an existing provider
+INSERT INTO public.ai_models (
+  provider_id,
+  model_name,
+  display_name,
+  context_window_tokens,
+  max_output_tokens,
+  supports_streaming,
+  supports_json_mode
+) VALUES (
+  (SELECT id FROM public.ai_providers WHERE slug = 'google'), -- or 'alibaba-dashscope'
+  'gemini-2.0-flash',                                          -- exact API string
+  'Google Gemini 2.0 Flash',
+  1000000,
+  8192,
+  true,
+  true
+);</code></pre>
+      </div>
+    </section>
+
+    <!-- SECTION 10 -->
+    <section id="sec-10" class="doc-section">
+      <h2><span class="sec-num">10</span> Changing a Model for a Role</h2>
+      <p>
+        To switch which model powers a role, update the <code>primary_model_id</code> in <code>ai_roles</code>.
+      </p>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">SQL</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code>-- Switch the 'writer' role to use Gemini 2.0 Flash
+UPDATE public.ai_roles
+SET primary_model_id = (
+  SELECT id FROM public.ai_models WHERE model_name = 'gemini-2.0-flash'
+)
+WHERE role_slug = 'writer';</code></pre>
+      </div>
+
+      <div class="callout success">
+        <div class="callout-title">Zero Workflow Changes Required</div>
+        <p>
+          The n8n workflow continues making the exact same call to <code>role: "writer"</code>. The very next execution automatically runs against the new model!
+        </p>
+      </div>
+    </section>
+
+    <!-- SECTION 11 -->
+    <section id="sec-11" class="doc-section">
+      <h2><span class="sec-num">11</span> Changing Model Providers</h2>
+      <p>
+        If you want to move a role across completely different providers (e.g. switching <code>writer</code> from Alibaba Qwen to Google Gemini):
+      </p>
+      <ol>
+        <li>Verify that the destination provider's secret (e.g. <code>GOOGLE_API_KEY</code>) is configured in your NAS <code>.env</code> and Supabase Secrets.</li>
+        <li>Ensure the destination model exists in <code>ai_models</code>.</li>
+        <li>Update <code>ai_roles.primary_model_id</code> to point to that model.</li>
+      </ol>
+    </section>
+
+    <!-- SECTION 12 -->
+    <section id="sec-12" class="doc-section">
+      <h2><span class="sec-num">12</span> Secrets & API Key Management</h2>
+      <p>
+        Security Rule: <strong>Raw API keys and secrets are NEVER stored in the database.</strong>
+      </p>
+      <p>
+        The <code>ai_providers.secret_name</code> column stores only the <em>name</em> of the environment variable (e.g. <code>"DASHSCOPE_API_KEY"</code>). At runtime, the Gateway executes <code>Deno.env.get(secret_name)</code> to retrieve the raw key securely from memory.
+      </p>
+
+      <h3>Managing Secrets in NAS Docker</h3>
+      <p>Secrets are stored in the <code>.env</code> file in your NAS deployment folder (e.g. <code>/volume1/docker/ai-gateway/.env</code>):</p>
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">Bash (NAS .env)</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code># NAS Gateway Environment Variables (.env)
+SUPABASE_URL=https://sffzyfosmhccnyqhatci.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1...
+DASHSCOPE_API_KEY=sk-ws-...
+ALIBABA_API_KEY=sk-...
+GOOGLE_API_KEY=AIzaSy...</code></pre>
+      </div>
+      <p>After modifying <code>.env</code> on the NAS, restart the container: <code>docker-compose up -d --force-recreate</code>.</p>
+
+      <h3>Managing Secrets in Supabase Edge Functions</h3>
+      <p>Use the official Supabase CLI from your terminal:</p>
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">Bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code># Set or update secrets on Supabase Cloud Edge Function
+supabase secrets set DASHSCOPE_API_KEY=sk-ws-... --project-ref sffzyfosmhccnyqhatci
+supabase secrets set GOOGLE_API_KEY=AIzaSy... --project-ref sffzyfosmhccnyqhatci
+
+# List active secret names (values remain masked for security)
+supabase secrets list --project-ref sffzyfosmhccnyqhatci</code></pre>
+      </div>
+    </section>
+
+    <!-- SECTION 13 -->
+    <section id="sec-13" class="doc-section">
+      <h2><span class="sec-num">13</span> NAS Docker Deployment Specification</h2>
+      <p>
+        The on-premise Gateway runs on your Synology NAS inside a Docker container managed by Docker Compose or Synology Container Manager.
+      </p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Verified Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Container Name</strong></td>
+              <td><code>ai-gateway</code></td>
+            </tr>
+            <tr>
+              <td><strong>Internal Port Mapping</strong></td>
+              <td><code>8000/tcp</code> ➔ <code>8000</code> (or Web Portal port <code>18000</code>)</td>
+            </tr>
+            <tr>
+              <td><strong>Base Image / Runtime</strong></td>
+              <td>Deno 1.37.2+ (<code>denoland/deno</code>)</td>
+            </tr>
+            <tr>
+              <td><strong>Execution Command</strong></td>
+              <td><code>deno run --allow-net --allow-env index.ts</code></td>
+            </tr>
+            <tr>
+              <td><strong>Docker Network</strong></td>
+              <td><code>n8n_default</code> (Bridge network shared with local n8n)</td>
+            </tr>
+            <tr>
+              <td><strong>Internal n8n URL</strong></td>
+              <td><code>http://ai-gateway:8000</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Operational Docker Commands for NAS (via SSH)</h3>
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">Bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code># Check container status
+sudo docker ps | grep ai-gateway
+
+# View live real-time logs
+sudo docker logs -f ai-gateway
+
+# Rebuild image from scratch (ignoring cache) and restart
+cd /volume1/docker/ai-gateway
+sudo docker-compose build --no-cache
+sudo docker-compose up -d
+
+# Inspect file contents inside the running container
+sudo docker exec -it ai-gateway cat /app/contracts/generate-request.ts</code></pre>
+      </div>
+    </section>
+
+    <!-- SECTION 14 -->
+    <section id="sec-14" class="doc-section">
+      <h2><span class="sec-num">14</span> NAS Source Code Updates & Maintenance</h2>
+      <p>
+        To update the AI Gateway code running on your NAS:
+      </p>
+
+      <h3>Method 1: File Station Drag & Drop (Current Setup)</h3>
+      <ol>
+        <li>Export or copy the updated <code>supabase/functions/ai-gateway/</code> folder from your development machine.</li>
+        <li>Open Synology <strong>File Station</strong>, navigate to <code>docker > ai-gateway</code>, and overwrite the files (e.g. <code>index.ts</code>, <code>contracts/</code>, <code>adapters/</code>, <code>services/</code>).</li>
+        <li>SSH into your NAS, navigate to <code>/volume1/docker/ai-gateway</code>, and run <code>sudo docker-compose build --no-cache && sudo docker-compose up -d</code>.</li>
+      </ol>
+
+      <h3>Method 2: Git Auto-Update Script (Automated Improvement)</h3>
+      <p>
+        If Git Server is installed on your Synology NAS, use our verified update script at <code>scripts/nas-auto-update.sh</code>.
+      </p>
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">Bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code># Run auto-update manually or add to NAS Task Scheduler every 5 mins
+sudo bash /volume1/docker/ai-gateway/scripts/nas-auto-update.sh</code></pre>
+      </div>
+    </section>
+
+    <!-- SECTION 15 -->
+    <section id="sec-15" class="doc-section">
+      <h2><span class="sec-num">15</span> Supabase Edge Function Deployment</h2>
+      <p>
+        The cloud version of the AI Gateway is hosted directly on Supabase's global edge infrastructure.
+      </p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Attribute</th>
+              <th>Production Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Project Reference</strong></td>
+              <td><code>sffzyfosmhccnyqhatci</code></td>
+            </tr>
+            <tr>
+              <td><strong>Edge Function Name</strong></td>
+              <td><code>ai-gateway</code></td>
+            </tr>
+            <tr>
+              <td><strong>Public Endpoint URL</strong></td>
+              <td><code>https://sffzyfosmhccnyqhatci.supabase.co/functions/v1/ai-gateway</code></td>
+            </tr>
+            <tr>
+              <td><strong>Required Auth Header</strong></td>
+              <td><code>Authorization: Bearer &lt;SUPABASE_SERVICE_ROLE_KEY&gt;</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Deploying from Developer Machine via Supabase CLI</h3>
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">Bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code># Deploy the AI Gateway to Supabase Edge Network
+supabase functions deploy ai-gateway --project-ref sffzyfosmhccnyqhatci --no-verify-jwt</code></pre>
+      </div>
+    </section>
+
+    <!-- SECTION 16 -->
+    <section id="sec-16" class="doc-section">
+      <h2><span class="sec-num">16</span> Supabase ↔ GitHub CI/CD Automation</h2>
+      <p>
+        The repository already includes an automated GitHub Actions workflow configured in <code>.github/workflows/deploy-edge-functions.yml</code>.
+      </p>
+      <p>
+        Whenever code is committed and pushed to the <code>main</code> branch on GitHub, GitHub Actions automatically deploys the updated edge functions to Supabase Cloud using secrets <code>SUPABASE_ACCESS_TOKEN</code> and <code>SUPABASE_PROJECT_ID</code>.
+      </p>
+    </section>
+
+    <!-- SECTION 17 -->
+    <section id="sec-17" class="doc-section">
+      <h2><span class="sec-num">17</span> NAS ↔ GitHub Automation</h2>
+      <p>
+        <strong>Current Status:</strong> The NAS is not automatically triggered by GitHub webhooks because it lives on a private local network behind NAT/firewall.
+      </p>
+      <p>
+        <strong>Recommended Solution:</strong> Use the polling script <code>scripts/nas-auto-update.sh</code> scheduled via Synology DSM Task Scheduler (every 5 minutes), which pulls from GitHub without exposing any inbound ports on your home router.
+      </p>
+    </section>
+
+    <!-- SECTION 18 -->
+    <section id="sec-18" class="doc-section">
+      <h2><span class="sec-num">18</span> NAS ↔ Supabase Failover & Switching Guide</h2>
+      <p>
+        If your NAS goes offline for hardware maintenance, or if you want to switch your n8n workflow from the local NAS Gateway to the Supabase Cloud Gateway, follow this checklist:
+      </p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Setting in n8n HTTP Node</th>
+              <th>When Using NAS Gateway</th>
+              <th>When Using Supabase Cloud Gateway</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>URL</strong></td>
+              <td><code>http://ai-gateway:8000</code></td>
+              <td><code>https://sffzyfosmhccnyqhatci.supabase.co/functions/v1/ai-gateway</code></td>
+            </tr>
+            <tr>
+              <td><strong>Authorization Header</strong></td>
+              <td>None required (internal LAN)</td>
+              <td><code>Bearer &lt;YOUR_SUPABASE_SERVICE_ROLE_KEY&gt;</code></td>
+            </tr>
+            <tr>
+              <td><strong>Content-Type Header</strong></td>
+              <td><code>application/json</code></td>
+              <td><code>application/json</code></td>
+            </tr>
+            <tr>
+              <td><strong>Body Format</strong></td>
+              <td>Exact same JSON contract</td>
+              <td>Exact same JSON contract</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 19 -->
+    <section id="sec-19" class="doc-section">
+      <h2><span class="sec-num">19</span> n8n Workflow Integration Reference</h2>
+      <p>
+        All HTTP nodes calling the AI Gateway in n8n adhere to the standard contracts below.
+      </p>
+
+      <h3>1. Planner Node (Template Mode)</h3>
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">JSON Payload</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code>{
+  "role": "planner",
+  "variables": {
+    "topic": "={{ $json.topic }}",
+    "category": "={{ $json.category }}",
+    "article_type": "={{ $json.article_type }}"
+  }
+}</code></pre>
+      </div>
+
+      <h3>2. Writer Node (Template Mode)</h3>
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">JSON Payload</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code>{
+  "role": "writer",
+  "variables": {
+    "article_plan": "={{ JSON.stringify($json) }}"
+  }
+}</code></pre>
+      </div>
+
+      <h3>3. Image Generator Node (Direct Mode)</h3>
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">JSON Payload</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code>{
+  "role": "image_generator",
+  "type": "image",
+  "mode": "direct",
+  "userPrompt": "={{ $('Image Prompt Builder').first().json.prompt }}",
+  "negativePrompt": "={{ $('Image Prompt Builder').first().json.negative_prompt }}",
+  "imageSize": "1920*1080"
+}</code></pre>
+      </div>
+    </section>
+
+    <!-- SECTION 20 -->
+    <section id="sec-20" class="doc-section">
+      <h2><span class="sec-num">20</span> Image Generation Flow</h2>
+      <p>
+        During standard article creation, image generation proceeds through the following pipeline:
+      </p>
+      <ol>
+        <li><strong>Image Planner AI (Gemma 4 31B):</strong> Analyzes article plan and generates structured anatomical yoga specifications.</li>
+        <li><strong>Image Prompt Builder:</strong> Compiles detailed photorealistic prompt text and negative prompts.</li>
+        <li><strong>Alibaba Image Generation HTTP:</strong> Sends <code>mode: "direct", type: "image"</code> request to AI Gateway.</li>
+        <li><strong>AI Gateway (AlibabaAdapter):</strong> Calls Alibaba WanX multimodal API, returns clean image URL in <code>images[0].url</code>.</li>
+        <li><strong>Cloudinary Upload:</strong> Downloads image and uploads to Cloudinary CDN folder <code>yoga/general/article</code>.</li>
+        <li><strong>Insert Image Asset:</strong> Stores record in table <code>image_assets</code> with <code>version = 1, is_primary = true</code>.</li>
+      </ol>
+    </section>
+
+    <!-- SECTION 21 -->
+    <section id="sec-21" class="doc-section">
+      <h2><span class="sec-num">21</span> Image Regeneration Flow (Child Workflow)</h2>
+      <p>
+        When an administrator requests an image regeneration from the Admin Dashboard:
+      </p>
+      <ol>
+        <li>Admin clicks "Regenerate Image" in Admin UI ➔ Triggers Webhook in <code>Sub - Image Regeneration.json</code> with <code>image_asset_id</code>.</li>
+        <li><strong>Get a row:</strong> Fetches the existing row from <code>image_assets</code> to retrieve the original prompt, negative prompt, and Cloudinary public ID.</li>
+        <li><strong>AI Gateway Request:</strong> Submits direct image request to AI Gateway using original prompt parameters.</li>
+        <li><strong>Download & Cloudinary:</strong> Uploads newly generated image to Cloudinary using versioned naming: <code>{{ cloudinary_public_id }}-v{{ version + 1 }}</code>.</li>
+        <li><strong>Create a row:</strong> Inserts a <strong>new</strong> row in <code>image_assets</code> with <code>version: version + 1</code> and <code>is_primary: false</code> (preserving historical version 1 intact).</li>
+        <li><strong>Respond to Webhook:</strong> Returns success JSON to the Admin UI.</li>
+      </ol>
+    </section>
+
+    <!-- SECTION 22 -->
+    <section id="sec-22" class="doc-section">
+      <h2><span class="sec-num">22</span> Debugging & Troubleshooting Guide</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Error Message / Symptom</th>
+              <th>Root Cause</th>
+              <th>Resolution Steps</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Active prompt template is not configured.</code> (400)</td>
+              <td>Image request sent in <code>template</code> mode instead of <code>direct</code> mode, or Gateway container is running old code that doesn't support <code>mode: "direct"</code>.</td>
+              <td>Ensure request payload has <code>"mode": "direct"</code>. If payload has it, rebuild NAS container without cache (<code>docker-compose build --no-cache</code>).</td>
+            </tr>
+            <tr>
+              <td><code>OpenAI-compatible API Error (404):</code></td>
+              <td>The provider's <code>api_base_url</code> has an incorrect path (e.g. missing <code>/compatible-mode/v1</code> on Alibaba DashScope).</td>
+              <td>Update <code>ai_providers.api_base_url</code> to <code>https://ws-...maas.aliyuncs.com/compatible-mode/v1</code> for text Qwen models.</td>
+            </tr>
+            <tr>
+              <td><code>Provider secret not configured.</code> (400)</td>
+              <td>The environment variable specified in <code>ai_providers.secret_name</code> is missing from NAS <code>.env</code> or Supabase Secrets.</td>
+              <td>Add the secret name (e.g. <code>DASHSCOPE_API_KEY</code>) to NAS <code>.env</code> or run <code>supabase secrets set</code>.</td>
+            </tr>
+            <tr>
+              <td><code>OpenAI-compatible API Error (401): invalid_api_key</code></td>
+              <td>A workspace-specific key (<code>sk-ws-...</code>) is being sent to the global DashScope endpoint, or vice-versa.</td>
+              <td>Ensure the provider's <code>api_base_url</code> matches the key scope (e.g. private <code>ws-w18n...</code> workspace).</td>
+            </tr>
+            <tr>
+              <td><code>Adapter ... does not support image generation</code> (400)</td>
+              <td>An image request was routed to a role whose model belongs to Google or a text-only OpenAI provider.</td>
+              <td>Change <code>ai_roles.primary_model_id</code> for <code>image_generator</code> to point to an Alibaba image model (e.g. <code>qwen-image-2.0</code>).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 23 -->
+    <section id="sec-23" class="doc-section">
+      <h2><span class="sec-num">23</span> Logging & Observability</h2>
+      <p>
+        Every Gateway request generates a unique UUID (<code>request_id</code>) and high-resolution timer diagnostics in the console:
+      </p>
+      <ul>
+        <li><code>[TIMER] parseJsonBody took Xms</code></li>
+        <li><code>[TIMER] getRole took Xms</code></li>
+        <li><code>[TIMER] getModelAndProvider took Xms</code></li>
+        <li><code>[TIMER] adapter.generate / generateImage took Xms</code></li>
+      </ul>
+      <p>
+        The <code>request_id</code> is returned in all responses and stored in <code>image_assets.generation_request_id</code> and telemetry logs to allow end-to-end tracing from n8n to provider APIs.
+      </p>
+    </section>
+
+    <!-- SECTION 24 -->
+    <section id="sec-24" class="doc-section">
+      <h2><span class="sec-num">24</span> Verified Test Commands (Copy & Run)</h2>
+
+      <h3>1. Test NAS Gateway — Direct Image Generation</h3>
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">PowerShell</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code>Invoke-RestMethod -Uri "http://ai-gateway:8000" -Method POST -Headers @{ "Content-Type" = "application/json" } -Body '{"role":"image_generator","type":"image","mode":"direct","userPrompt":"Photorealistic yoga pose, Tadasana, professional lighting","imageSize":"1024*1024"}'</code></pre>
+      </div>
+
+      <h3>2. Test Supabase Cloud Gateway — Direct Image Generation</h3>
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">PowerShell</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code>Invoke-RestMethod -Uri "https://sffzyfosmhccnyqhatci.supabase.co/functions/v1/ai-gateway" -Method POST -Headers @{ "Authorization" = "Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY"; "Content-Type" = "application/json" } -Body '{"role":"image_generator","type":"image","mode":"direct","userPrompt":"Photorealistic yoga pose, Tadasana, professional lighting","imageSize":"1024*1024"}'</code></pre>
+      </div>
+
+      <h3>3. Test Text Generation (Writer Role in Template Mode)</h3>
+      <div class="code-container">
+        <div class="code-header">
+          <span class="lang">PowerShell</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy Code</button>
+        </div>
+        <pre><code>Invoke-RestMethod -Uri "http://ai-gateway:8000" -Method POST -Headers @{ "Content-Type" = "application/json" } -Body '{"role":"writer","variables":{"article_plan":"{\"title\":\"Test Article\",\"topic\":\"Pranayama\"}"}}'</code></pre>
+      </div>
+    </section>
+
+    <!-- SECTION 25 -->
+    <section id="sec-25" class="doc-section">
+      <h2><span class="sec-num">25</span> Security Guidelines</h2>
+      <ul>
+        <li><strong>Principle of Least Privilege:</strong> Never expose the <code>service_role</code> key to frontend clients. Frontend apps must only use the Supabase <code>anon</code> key with Row Level Security (RLS) policies.</li>
+        <li><strong>Zero Raw Keys in Git:</strong> Never commit <code>.env</code> files or API keys to GitHub repositories.</li>
+        <li><strong>Masked Logging:</strong> The Gateway automatically logs request metrics while keeping API keys and authorization headers masked.</li>
+      </ul>
+    </section>
+
+    <!-- SECTION 26 -->
+    <section id="sec-26" class="doc-section">
+      <h2><span class="sec-num">26</span> Safe Change Management</h2>
+      <ol>
+        <li><strong>Database Changes:</strong> Always test model switches using a SQL transaction or testing with an unused test role first.</li>
+        <li><strong>NAS Container Rebuilds:</strong> Always keep a backup copy of your working <code>.env</code> file before rebuilding containers on the NAS.</li>
+        <li><strong>Edge Function Deployments:</strong> Test changes locally using <code>supabase functions serve</code> before deploying live to production.</li>
+      </ol>
+    </section>
+
+    <!-- SECTION 27 -->
+    <section id="sec-27" class="doc-section">
+      <h2><span class="sec-num">27</span> Rollback Procedures</h2>
+      <p>
+        If a new model or adapter deployment fails in production:
+      </p>
+      <ul>
+        <li><strong>Model/Provider Rollback:</strong> Revert <code>ai_roles.primary_model_id</code> in the Supabase SQL editor to the previous model ID. Effect is instantaneous.</li>
+        <li><strong>Supabase Edge Function Rollback:</strong> Redeploy the previous Git commit using <code>git checkout &lt;previous-commit&gt; && supabase functions deploy ai-gateway</code>.</li>
+        <li><strong>NAS Container Rollback:</strong> Revert local files on NAS and run <code>docker-compose build --no-cache && docker-compose up -d</code>.</li>
+      </ul>
+    </section>
+
+    <!-- SECTION 28 -->
+    <section id="sec-28" class="doc-section">
+      <h2><span class="sec-num">28</span> Administrator Quick Reference Cheat Sheet</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Task / Question</th>
+              <th>Quick Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Switch Writer Model</td>
+              <td><code>UPDATE ai_roles SET primary_model_id = '&lt;model_id&gt;' WHERE role_slug = 'writer';</code></td>
+            </tr>
+            <tr>
+              <td>Rotate Alibaba / DashScope Key</td>
+              <td>Update <code>DASHSCOPE_API_KEY</code> in NAS <code>.env</code> and run <code>supabase secrets set DASHSCOPE_API_KEY=...</code></td>
+            </tr>
+            <tr>
+              <td>Rebuild NAS Container</td>
+              <td>SSH into NAS ➔ <code>cd /volume1/docker/ai-gateway && sudo docker-compose build --no-cache && sudo docker-compose up -d</code></td>
+            </tr>
+            <tr>
+              <td>Switch n8n to Cloud Gateway</td>
+              <td>Change node URL to <code>https://sffzyfosmhccnyqhatci.supabase.co/functions/v1/ai-gateway</code> and add <code>Authorization: Bearer &lt;SERVICE_ROLE_KEY&gt;</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 29 -->
+    <section id="sec-29" class="doc-section">
+      <h2><span class="sec-num">29</span> Architecture Decision Record (ADR)</h2>
+      <div class="callout info">
+        <div class="callout-title">ADR 001: Decoupled Role-Based Gateway Architecture</div>
+        <p>
+          <strong>Status:</strong> Approved & Implemented (August 2026)<br>
+          <strong>Context:</strong> High maintenance overhead from hardcoding AI provider endpoints and API keys inside 20+ n8n workflow nodes.<br>
+          <strong>Decision:</strong> Route all AI requests through a unified TypeScript Gateway. Store role-to-model and model-to-provider mappings in PostgreSQL. Support dual execution (NAS on-prem for internal speed, Supabase Edge for public webhooks).<br>
+          <strong>Consequences:</strong> Zero-downtime model switching via SQL, centralized secret storage, standardized error handling and response normalization.
+        </p>
+      </div>
+    </section>
+
+    <!-- SECTION 30 -->
+    <section id="sec-30" class="doc-section">
+      <h2><span class="sec-num">30</span> Current System Inventory</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th>Current Verified Value / Configuration</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Gateway Version</strong></td>
+              <td>v1.2.0 (Multimodal Image + Direct Mode + Streaming support)</td>
+            </tr>
+            <tr>
+              <td><strong>Primary Database</strong></td>
+              <td>Supabase PostgreSQL (Project Ref: <code>sffzyfosmhccnyqhatci</code>)</td>
+            </tr>
+            <tr>
+              <td><strong>Active Text Roles</strong></td>
+              <td><code>planner</code>, <code>writer</code>, <code>rewrite</code>, <code>image_planner</code></td>
+            </tr>
+            <tr>
+              <td><strong>Active Image Roles</strong></td>
+              <td><code>image_generator</code></td>
+            </tr>
+            <tr>
+              <td><strong>Supported Adapters</strong></td>
+              <td><code>GoogleAdapter</code>, <code>OpenAICompatibleAdapter</code>, <code>AlibabaAdapter</code></td>
+            </tr>
+            <tr>
+              <td><strong>Secret Names Used</strong></td>
+              <td><code>DASHSCOPE_API_KEY</code>, <code>ALIBABA_API_KEY</code>, <code>GOOGLE_API_KEY</code>, <code>OPENAI_API_KEY</code></td>
+            </tr>
+            <tr>
+              <td><strong>NAS Docker Directory</strong></td>
+              <td><code>/volume1/docker/ai-gateway</code> (Synology DSM)</td>
+            </tr>
+            <tr>
+              <td><strong>Git Repository</strong></td>
+              <td><code>https://github.com/gchakra4/sampurnayogam.git</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION: LIMITATIONS -->
+    <section id="sec-limitations" class="doc-section">
+      <h2><span class="sec-num">31</span> Documentation Limitations</h2>
+      <p>
+        For full transparency, the following environment details are specific to your local physical infrastructure and should be verified on your machines:
+      </p>
+      <ul>
+        <li><strong>NAS Storage Volume:</strong> Assumed <code>/volume1/docker/ai-gateway</code> based on Synology defaults. Verify your volume number if multiple pools exist.</li>
+        <li><strong>n8n Webhook Auth:</strong> Image regeneration webhook credentials depend on your local n8n credential vault IDs (e.g. <code>XrYDfsaQEf13xmWM</code>).</li>
+      </ul>
+
+      <a href="#sec-1" class="back-to-top">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+        Back to Top
+      </a>
+    </section>
+
+  </main>
+
+  <script>
+    // Copy Code Utility
+    function copyCode(btn) {
+      const codeBlock = btn.closest('.code-container').querySelector('pre code');
+      if (!codeBlock) return;
+      navigator.clipboard.writeText(codeBlock.innerText).then(() => {
+        btn.classList.add('copied');
+        btn.innerText = 'Copied!';
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          btn.innerText = 'Copy Code';
+        }, 2000);
+      });
+    }
+
+    // Sidebar Mobile Toggle
+    const mobileBtn = document.getElementById('mobileNavToggle');
+    const sidebar = document.getElementById('sidebar');
+    if (mobileBtn && sidebar) {
+      mobileBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+      });
+    }
+
+    // Live Search Filter across TOC and Document
+    const searchInput = document.getElementById('docSearch');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        const navItems = document.querySelectorAll('.nav-list li');
+        
+        navItems.forEach(item => {
+          const text = item.innerText.toLowerCase();
+          if (!query || text.includes(query)) {
+            item.style.display = 'block';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+      });
+    }
+
+    // Active Section Tracking
+    window.addEventListener('scroll', () => {
+      const sections = document.querySelectorAll('section.doc-section');
+      const navLinks = document.querySelectorAll('ul.nav-list li a');
+      let currentSectionId = '';
+
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop - 100;
+        if (window.scrollY >= sectionTop) {
+          currentSectionId = section.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + currentSectionId) {
+          link.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

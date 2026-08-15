@@ -179,8 +179,14 @@ log_info "Analyzing backup contents..."
 
 # Read project config
 if [ -f "${TEMP_DIR}/project-config.json" ]; then
-    SOURCE_PROJECT=$(jq -r '.project_ref // "unknown"' "${TEMP_DIR}/project-config.json")
-    BACKUP_TIMESTAMP=$(jq -r '.timestamp // "unknown"' "${TEMP_DIR}/project-config.json")
+    # Fix malformed JSON from old backups (empty source_project value)
+    if grep -q '"source_project": ,' "${TEMP_DIR}/project-config.json" 2>/dev/null; then
+        log_warn "Detected malformed JSON in project-config.json, fixing..."
+        sed -i 's/"source_project": ,/"source_project": {},/' "${TEMP_DIR}/project-config.json"
+    fi
+    
+    SOURCE_PROJECT=$(jq -r --arg d "unknown" '.project_ref // $d' "${TEMP_DIR}/project-config.json" 2>/dev/null || echo "unknown")
+    BACKUP_TIMESTAMP=$(jq -r --arg d "unknown" '.timestamp // $d' "${TEMP_DIR}/project-config.json" 2>/dev/null || echo "unknown")
     log_info "Source project: $SOURCE_PROJECT"
     log_info "Backup timestamp: $BACKUP_TIMESTAMP"
 fi
@@ -232,6 +238,13 @@ if [ "$HAS_DATABASE" = true ]; then
     
     export PGPASSWORD="$NEW_PG_PASSWORD"
     
+    # Ensure public schema exists
+    log_info "Ensuring public schema exists..."
+    psql -h "$NEW_PG_HOST" -p "$NEW_PG_PORT" -U "$NEW_PG_USER" -d "$NEW_PG_DATABASE" \
+        -c "CREATE SCHEMA IF NOT EXISTS public;" \
+        -c "GRANT ALL ON SCHEMA public TO postgres;" \
+        -c "GRANT ALL ON SCHEMA public TO public;" 2>/dev/null || log_warn "Schema setup warnings (may be expected)"
+    
     # Option 1: Restore from custom dump (recommended)
     if [ -f "${TEMP_DIR}/db-full.dump" ]; then
         log_info "Restoring from custom format dump..."
@@ -240,17 +253,26 @@ if [ "$HAS_DATABASE" = true ]; then
         # Build connection string
         CONN_STRING="postgresql://${NEW_PG_USER}:${NEW_PG_PASSWORD}@${NEW_PG_HOST}:${NEW_PG_PORT}/${NEW_PG_DATABASE}"
         
+        # Use pg_restore with error handling
+        log_info "Running pg_restore (this may take several minutes)..."
         if pg_restore \
             --clean \
             --if-exists \
             --no-owner \
             --no-privileges \
+            --verbose \
             --dbname="$CONN_STRING" \
             "${TEMP_DIR}/db-full.dump" 2>&1 | tee "${TEMP_DIR}/restore.log"; then
             log_success "Database restored successfully"
         else
-            log_warn "Some errors occurred during restore (this is often normal)"
+            # Most pg_restore errors are expected (roles, extensions, RLS policies, etc.)
+            log_warn "Some errors occurred during restore (this is often normal for Supabase)"
             log_info "Check ${TEMP_DIR}/restore.log for details"
+            
+            # Only warn about critical connection errors
+            if grep -qi "FATAL.*connection\|could not connect" "${TEMP_DIR}/restore.log"; then
+                log_error "Connection errors detected - restore may be incomplete"
+            fi
         fi
     fi
     
@@ -281,6 +303,8 @@ if [ "$HAS_FUNCTIONS" = true ]; then
         
         if [ -n "$FUNCTION_NAMES" ]; then
             while IFS= read -r func_name; do
+                # Strip Windows line endings
+                func_name=$(echo "$func_name" | tr -d '\r')
                 if [ -n "$func_name" ] && [ -d "${TEMP_DIR}/functions/${func_name}" ]; then
                     log_info "Deploying function: $func_name"
                     
