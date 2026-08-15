@@ -65,17 +65,28 @@ Security notes:
 
 ## 📦 Current Tools
 
+### Sampurnayogam AI Gateway
+Administrator & System Architecture manual for the Sampurnayogam AI Gateway System. Covers role routing, prompt modes, model adapters, database schema, NAS & Supabase deployments, and n8n workflows.
+- **Location:** `tools/Sampurnayogam-ai-gateway/`
+- **Guide:** [AI Gateway Administrator Guide](tools/Sampurnayogam-ai-gateway/AI%20Gateway%20Administrator%20Guide.html)
+- **GitHub:** [Sampurnayogam AI Gateway](https://github.com/gchakra4/devtools/tree/main/tools/Sampurnayogam-ai-gateway)
+
 ### Supabase Backup & Restore
 Complete backup and migration solution for Supabase projects.
 - **Location:** `tools/supabase-backup/`
 - **Guide:** [Complete Guide](tools/supabase-backup/complete_guide/index.html)
-- **GitHub:** [backup-tools branch](https://github.com/gchakra4/yogique/tree/backup-tools)
+- **GitHub:** [Supabase Backup](https://github.com/gchakra4/devtools/tree/main/tools/supabase-backup)
 
 ### Notification System
 Admin guide for the notification system covering email (Resend), WhatsApp (Meta Business API), queue processing, and monitoring.
 - **Location:** `tools/notification-system-guide/`
 - **Guide:** [Overview](tools/notification-system-guide/index.html)
 - **Contents:** `architecture.html`, `components.html`, `configuration.html`, `queue-management.html`, `troubleshooting.html`
+
+### Git Workflow Guide
+Complete guide for managing multiple repositories, branches, and deployments.
+- **Location:** `tools/git-workflow-guide/`
+- **Guide:** [Git Workflow Guide](tools/git-workflow-guide/index.html)
 
 ## 🎨 Customization
 
