@@ -459,7 +459,10 @@ fi
 log_info "Exporting project configuration..."
 
 # Get project info
-PROJECT_INFO=$(supabase projects list --output json 2>/dev/null | jq ".[] | select(.reference_id == \"$PROJECT_REF\")" || echo "{}")
+PROJECT_INFO=$(supabase projects list --output json 2>/dev/null | jq --arg ref "$PROJECT_REF" '.[] | select(.reference_id == $ref)' 2>/dev/null || echo "")
+if [ -z "$PROJECT_INFO" ]; then
+    PROJECT_INFO="{}"
+fi
 
 cat > "${BACKUP_PATH}/project-config.json" <<EOF
 {
